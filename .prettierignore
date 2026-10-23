@@ -2,6 +2,6 @@ main.js
 node_modules/
 coverage/
 .obsidian-cache/
-package-lock.json
+pnpm-lock.yaml
 spec/
 test/e2e/out/

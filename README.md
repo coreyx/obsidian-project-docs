@@ -99,6 +99,19 @@ Obsidian hides the `.project-docs` folder, and syncing never copies it to the re
 
 The plugin makes no network requests. It reads files only in your vault and in the repos it's linked to.
 
+## Development
+
+Requires Node 22 or newer and [pnpm](https://pnpm.io). The pnpm version is pinned in `package.json`, and pnpm switches to it on its own.
+
+```sh
+pnpm install
+pnpm run build
+pnpm test
+pnpm run test:e2e
+```
+
+`pnpm run test:e2e` downloads Obsidian into `.obsidian-cache/` and runs the end-to-end tests in a sandboxed copy of it. `pnpm version <version>` updates `manifest.json` and `versions.json`, commits and tags; pushing the tag builds the release.
+
 ## License
 
 MIT

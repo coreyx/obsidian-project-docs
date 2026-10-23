@@ -6,6 +6,7 @@
   "license": "MIT",
   "author": "Corey Struzan",
   "type": "module",
+  "packageManager": "pnpm@12.15.0",
   "engines": {
     "node": ">=22"
   },
@@ -47,10 +48,5 @@
     "wdio-obsidian-reporter": "^3.3.0",
     "wdio-obsidian-service": "^3.3.0",
     "webdriverio": "^9.32.0"
-  },
-  "overrides": {
-    "eslint-plugin-obsidianmd": {
-      "obsidian": "$obsidian"
-    }
   }
 }

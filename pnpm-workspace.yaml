@@ -1,0 +1,24 @@
+# pnpm's settings for this single-package repo.
+
+# Dependencies' install scripts run only when allowed. esbuild's fetches its platform binary. The
+# WebdriverIO downloaders for Edge and Firefox drivers aren't needed (the tests drive Obsidian's own
+# Chromium), and classic-level ships prebuilt binaries.
+allowBuilds:
+  esbuild: true
+  edgedriver: false
+  geckodriver: false
+  classic-level: false
+
+# eslint-plugin-obsidianmd's rules want obsidian 1.8.7 exactly, while the plugin builds against
+# newer type declarations; any version works for linting.
+peerDependencyRules:
+  allowedVersions:
+    eslint-plugin-obsidianmd>obsidian: "*"
+
+# pnpm holds back packages published very recently. The core is this project's own package,
+# published by its maintainer.
+minimumReleaseAgeExclude:
+  - "@specdevship/project-docs-core@0.1.0"
+
+# `pnpm version` tags the bare version (0.1.0, not v0.1.0), which Obsidian and BRAT expect.
+tagVersionPrefix: ""

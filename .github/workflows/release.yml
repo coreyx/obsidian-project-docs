@@ -21,11 +21,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      # Installs the pnpm version pinned in package.json's packageManager.
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Check the tag against the manifest
         run: |
           version=$(node -p "require('./manifest.json').version")
@@ -37,9 +39,9 @@ jobs:
               exit 1
               ;;
           esac
-      - run: npm run lint
-      - run: npm run build
-      - run: npm test
+      - run: pnpm run lint
+      - run: pnpm run build
+      - run: pnpm test
       - name: Gather the release files
         run: |
           mkdir release

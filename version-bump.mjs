@@ -1,4 +1,4 @@
-// Run by `npm version <new version>`: writes the new version into manifest.json, and records in
+// Run by `pnpm version <new version>`: writes the new version into manifest.json, and records in
 // versions.json which Obsidian version it needs, which Obsidian reads to offer older users a
 // release that still works for them.
 import { readFile, writeFile } from "node:fs/promises";
@@ -20,6 +20,6 @@ export async function bump(
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const version = process.env.npm_package_version;
-  if (!version) throw new Error("run this through `npm version`, which sets npm_package_version");
+  if (!version) throw new Error("run this through `pnpm version`, which sets npm_package_version");
   await bump(version);
 }
