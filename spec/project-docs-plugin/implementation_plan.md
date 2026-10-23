@@ -122,7 +122,7 @@ None at this time. Details that don't change the plan are settled in the task th
 ### Status
 
 #### [NEW] `src/status/reader.ts`, `src/status/banner.ts`
-- [ ] **TASK-10:** `StatusReader` (REQ-17.0.3, 17.2).
+- [x] **TASK-10:** `StatusReader` (REQ-17.0.3, 17.2).
   - It reads each project's `.project-docs/status.json` with the core's `parseStatusFile()` when the file changes.
   - It shows the overall state in the status bar: "Up to date", or "N need attention" with a tooltip listing them.
   - For the open note, it shows a banner at the top of the view when the note is held back, in conflict or waiting as `was-private`. The banner gives the item's message and reasons, which never contain real values. For `was-private`, it offers "Sync to Repo…", which uses TASK-8's modal.

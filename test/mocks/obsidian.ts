@@ -222,6 +222,8 @@ export class MarkdownView {
     callback: (evt: MouseEvent) => unknown;
   }[] = [];
 
+  contentEl = document.createElement("div");
+
   constructor(public file: { path: string; extension: string; name: string } | null) {}
 
   addAction(icon: string, title: string, callback: (evt: MouseEvent) => unknown): HTMLElement {
