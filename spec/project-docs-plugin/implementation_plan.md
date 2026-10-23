@@ -101,7 +101,7 @@ None at this time. Details that don't change the plan are settled in the task th
   - It writes `.project-docs/private-files.json` with the core's `serializePrivateFilesList()`, atomically, and only when the list changes.
 
 #### [NEW] `src/privacy/confirmations.ts`
-- [ ] **TASK-7:** `Confirmations` (design decision 17).
+- [x] **TASK-7:** `Confirmations` (design decision 17).
   - `confirm(file, text)` adds `{ path, sha256: markdownHash(text) }` to `.project-docs/confirmations.json`, using the core's `parseConfirmations()` and `serializeConfirmations()`.
   - `prune()` removes an entry once its note is deleted, its content no longer matches the hash, or `status.json` no longer reports it as `was-private`.
 
