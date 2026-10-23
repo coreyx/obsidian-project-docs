@@ -78,3 +78,127 @@ export const MarkdownRenderer = {
     await this.onRender?.(el, sourcePath);
   },
 };
+
+/** Obsidian's toast message; every message shown is kept in `shown`. */
+export class Notice {
+  static shown: string[] = [];
+
+  constructor(message: string) {
+    Notice.shown.push(message);
+  }
+}
+
+/** A button in a Setting, with the handlers tests click. */
+export class ButtonComponent {
+  text = "";
+  buttonEl = document.createElement("button");
+  private handler: (() => unknown) | undefined;
+
+  setButtonText(text: string): this {
+    this.text = text;
+    return this;
+  }
+
+  setCta(): this {
+    return this;
+  }
+
+  onClick(handler: () => unknown): this {
+    this.handler = handler;
+    return this;
+  }
+
+  click(): void {
+    this.handler?.();
+  }
+}
+
+/** A row of controls; only buttons are used. */
+export class Setting {
+  static buttons: ButtonComponent[] = [];
+
+  constructor(public containerEl: HTMLElement) {}
+
+  addButton(build: (button: ButtonComponent) => unknown): this {
+    const button = new ButtonComponent();
+    build(button);
+    Setting.buttons.push(button);
+    return this;
+  }
+}
+
+/** A dialog. Opening runs onOpen; closing runs onClose, as in Obsidian. */
+export class Modal {
+  static opened: Modal[] = [];
+  contentEl = document.createElement("div");
+  title = "";
+
+  constructor(public app: unknown) {}
+
+  setTitle(title: string): this {
+    this.title = title;
+    return this;
+  }
+
+  open(): void {
+    Modal.opened.push(this);
+    void this.onOpen();
+  }
+
+  close(): void {
+    this.onClose();
+  }
+
+  onOpen(): void | Promise<void> {}
+  onClose(): void {}
+}
+
+/** One item of a menu, with what it was given. */
+export class MenuItem {
+  title = "";
+  icon: string | null = null;
+  checked: boolean | null = null;
+  section = "";
+  handler: (() => unknown) | undefined;
+
+  setTitle(title: string): this {
+    this.title = title;
+    return this;
+  }
+
+  setIcon(icon: string | null): this {
+    this.icon = icon;
+    return this;
+  }
+
+  setChecked(checked: boolean | null): this {
+    this.checked = checked;
+    return this;
+  }
+
+  setSection(section: string): this {
+    this.section = section;
+    return this;
+  }
+
+  onClick(handler: () => unknown): this {
+    this.handler = handler;
+    return this;
+  }
+}
+
+/** A menu that keeps its items. */
+export class Menu {
+  items: MenuItem[] = [];
+
+  addItem(build: (item: MenuItem) => unknown): this {
+    const item = new MenuItem();
+    build(item);
+    this.items.push(item);
+    return this;
+  }
+
+  showAtMouseEvent(): this {
+    return this;
+  }
+}

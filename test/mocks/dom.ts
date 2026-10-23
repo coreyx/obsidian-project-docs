@@ -47,6 +47,17 @@ proto.setCssStyles = function (this: HTMLElement, styles: Partial<CSSStyleDeclar
 proto.setText = function (this: HTMLElement, text: string) {
   this.textContent = text;
 };
+proto.addClass = function (this: HTMLElement, ...classes: string[]) {
+  this.classList.add(...classes);
+};
+proto.removeClass = function (this: HTMLElement, ...classes: string[]) {
+  this.classList.remove(...classes);
+};
+proto.toggleClass = function (this: HTMLElement, classes: string | string[], value: boolean) {
+  for (const cls of typeof classes === "string" ? [classes] : classes) {
+    this.classList.toggle(cls, value);
+  }
+};
 
 const scope = window as unknown as Record<string, unknown>;
 scope.activeDocument = document;

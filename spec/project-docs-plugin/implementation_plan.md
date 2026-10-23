@@ -108,7 +108,7 @@ None at this time. Details that don't change the plan are settled in the task th
 ### Sync rules with the mouse
 
 #### [NEW] `src/rules/menu.ts`, `src/rules/confirm-modal.ts`
-- [ ] **TASK-8:** `RuleMenu` file-menu items (REQ-9.0.2, 9.1).
+- [x] **TASK-8:** `RuleMenu` file-menu items (REQ-9.0.2, 9.1).
   - Right-clicking a project's Markdown file shows a "Sync rule" submenu with `sync`, `repo-to-vault`, `repo-only` and `private`, the current one checked. That's three clicks from the file.
   - Choosing a rule writes it with the core's `setRule()` through `vault.process()`.
   - **From `private` to any other rule:** first opens `ConfirmUnprivateModal`. It names the note and says it will be copied into the repo at `<docs folder>/<key>`, with "Sync to Repo" and "Cancel" buttons (REQ-9.0.4, 9.3).
