@@ -87,7 +87,7 @@ None at this time. Details that don't change the plan are settled in the task th
 ### Privacy
 
 #### [NEW] `src/privacy/marker.ts`
-- [ ] **TASK-5:** `PrivateMarker` (REQ-10.0.3 to 10.0.5).
+- [x] **TASK-5:** `PrivateMarker` (REQ-10.0.3 to 10.0.5).
   - On vault `create`, and on `rename` into a private folder, it sets `project-docs: private` on a Markdown file that lacks it. It writes with `app.vault.process()` and the core's `setRule()`, so only that property changes.
   - When the layout is ready, it sweeps every project's private folder to mark files that arrived while Obsidian was closed (REQ-10.3).
   - It never removes a marker. A note moved out keeps it (REQ-10.0.5).

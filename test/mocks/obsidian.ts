@@ -9,6 +9,20 @@ export class Component {
   unload(): void {}
 }
 
+/** A file in the vault: its path, and the parts of it Obsidian derives from the path. */
+export class TFile {
+  constructor(public path: string) {}
+
+  get name(): string {
+    return this.path.slice(this.path.lastIndexOf("/") + 1);
+  }
+
+  get extension(): string {
+    const dot = this.name.lastIndexOf(".");
+    return dot === -1 ? "" : this.name.slice(dot + 1);
+  }
+}
+
 /** Obsidian's event emitter. */
 export class Events {
   private readonly handlers = new Map<string, ((...data: unknown[]) => unknown)[]>();
