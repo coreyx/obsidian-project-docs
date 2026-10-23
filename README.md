@@ -9,12 +9,23 @@ This plugin never syncs anything itself. The Project Docs VS Code extension, or 
 - it shows the sync status and any problems on the notes they concern;
 - it shows notes that use [PRIVATE.md](https://github.com/coreyx/private-md-standard) placeholders with their real values, read-only.
 
-It needs Obsidian 1.8.7 or later on the desktop. It isn't in the community plugin store yet.
+It needs Obsidian 1.8.7 or later on the desktop.
+
+## Install
+
+The plugin isn't in the community plugin store yet. Until it is, install the beta with [BRAT](https://github.com/TfTHacker/obsidian42-brat), which installs plugins from their GitHub releases and keeps them up to date:
+
+1. In Obsidian, open **Settings**, then **Community plugins**. Install and enable **BRAT**.
+2. In BRAT's settings, choose **Add beta plugin**.
+3. Enter `https://github.com/coreyx/obsidian-project-docs`, choose the latest version, and choose **Add plugin**.
+4. If **Project Docs** isn't enabled yet, enable it under **Community plugins**.
+
+BRAT checks for newer beta releases and updates the plugin, at startup if you turn that on in its settings.
 
 ## Getting started
 
 1. Link a repo to a folder in your vault with the VS Code extension's **Project Docs: Link to Obsidian**. That creates the project folder's folder note, the **link note**, which records the repo's path.
-2. Install and enable this plugin. It finds every linked project in the vault from its link note, and reads the project's settings from the repo's `.project-docs.json`.
+2. Install and enable this plugin (see [Install](#install)). It finds every linked project in the vault from its link note, and reads the project's settings from the repo's `.project-docs.json`.
 
 While the repo can't be read, for example on a disconnected drive, the plugin assumes the settings that protect the most: the private folder is `private`, and attachments are tracked.
 

@@ -1,11 +1,16 @@
 name: Release
 
-# Builds a draft GitHub release when a version tag is pushed. Obsidian's community store installs
-# the plugin from a release's main.js, manifest.json and styles.css, and expects the tag to be the
-# bare version (0.1.0, not v0.1.0). Publishing the draft, and submitting to the store, stay manual.
+# Builds a GitHub release when a version tag is pushed. Obsidian and BRAT install the plugin from a
+# release's main.js, manifest.json and styles.css, and expect the tag, the release name and the
+# released manifest's version to be the same bare version (0.1.0, not v0.1.0).
+# - A plain version tag (0.1.0) must match manifest.json, and makes a draft release; publishing it
+#   and submitting to the community store stay manual.
+# - A pre-release tag (0.1.0-beta.1) must be a pre-release of manifest.json's version. It's
+#   published at once as a GitHub pre-release, for beta testers installing with BRAT, with the tag
+#   stamped into the released manifest.json only, so the repo's manifest.json is unchanged.
 on:
   push:
-    tags: ["[0-9]+.[0-9]+.[0-9]+"]
+    tags: ["[0-9]+.[0-9]+.[0-9]+", "[0-9]+.[0-9]+.[0-9]+-*"]
 
 permissions:
   contents: write
@@ -21,20 +26,37 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Check the tag matches the manifest
+      - name: Check the tag against the manifest
         run: |
           version=$(node -p "require('./manifest.json').version")
-          if [ "$version" != "$GITHUB_REF_NAME" ]; then
-            echo "Tag $GITHUB_REF_NAME doesn't match manifest.json's version $version." >&2
-            exit 1
-          fi
+          case "$GITHUB_REF_NAME" in
+            "$version") ;;
+            "$version"-*) ;;
+            *)
+              echo "Tag $GITHUB_REF_NAME isn't manifest.json's version $version, or a pre-release of it." >&2
+              exit 1
+              ;;
+          esac
       - run: npm run lint
       - run: npm run build
       - run: npm test
-      - name: Create a draft release
+      - name: Gather the release files
+        run: |
+          mkdir release
+          cp main.js styles.css release/
+          node -e "
+            const fs = require('fs');
+            const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+            manifest.version = process.env.GITHUB_REF_NAME;
+            fs.writeFileSync('release/manifest.json', JSON.stringify(manifest, null, 2) + '\n');
+          "
+      - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" main.js manifest.json styles.css \
-            --draft --title "$GITHUB_REF_NAME" \
-            --notes "See CHANGELOG.md for what changed in $GITHUB_REF_NAME."
+          case "$GITHUB_REF_NAME" in
+            *-*) kind="--prerelease"; notes="Beta of $GITHUB_REF_NAME for testing with BRAT. See CHANGELOG.md." ;;
+            *) kind="--draft"; notes="See CHANGELOG.md for what changed in $GITHUB_REF_NAME." ;;
+          esac
+          gh release create "$GITHUB_REF_NAME" release/main.js release/manifest.json release/styles.css \
+            $kind --title "$GITHUB_REF_NAME" --notes "$notes"
