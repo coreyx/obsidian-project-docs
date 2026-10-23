@@ -170,7 +170,7 @@ None at this time. Details that don't change the plan are settled in the task th
   Unit tests cover the logic behind each component.
 
 #### [NEW] `.github/workflows/release.yml`
-- [ ] **TASK-15:** On a version tag you push, build the plugin and attach `main.js`, `manifest.json` and `styles.css` to a draft GitHub release, after checking that the tag matches `manifest.json`'s version. Add the `version` script that bumps `manifest.json` and `versions.json` together. Publishing to the store stays TASK-31 of the main spec.
+- [x] **TASK-15:** On a version tag you push, build the plugin and attach `main.js`, `manifest.json` and `styles.css` to a draft GitHub release, after checking that the tag matches `manifest.json`'s version. Add the `version` script that bumps `manifest.json` and `versions.json` together. Publishing to the store stays TASK-31 of the main spec.
 
 ## Verification Plan
 
