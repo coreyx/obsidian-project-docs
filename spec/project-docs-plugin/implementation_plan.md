@@ -117,7 +117,7 @@ None at this time. Details that don't change the plan are settled in the task th
   - Files in the private folder offer no rule other than `private`, since the folder keeps them private whatever their frontmatter says (REQ-10.0.1).
 
 #### [NEW] `src/rules/indicator.ts`
-- [ ] **TASK-9:** The current note's rule in the status bar and as a header action on Markdown views (REQ-9.0.1, 9.0.3). Clicking either opens the same choices as the menu, with the same confirmation.
+- [x] **TASK-9:** The current note's rule in the status bar and as a header action on Markdown views (REQ-9.0.1, 9.0.3). Clicking either opens the same choices as the menu, with the same confirmation.
 
 ### Status
 

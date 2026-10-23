@@ -202,3 +202,34 @@ export class Menu {
     return this;
   }
 }
+
+/** Shows an icon by name; here, recorded on the element. */
+export function setIcon(el: HTMLElement, icon: string): void {
+  el.dataset.icon = icon;
+}
+
+/** Sets an element's tooltip; here, its aria-label, as Obsidian also does. */
+export function setTooltip(el: HTMLElement, tooltip: string): void {
+  el.setAttribute("aria-label", tooltip);
+}
+
+/** A Markdown note's view, with the header actions added to it. */
+export class MarkdownView {
+  actions: {
+    el: HTMLElement;
+    icon: string;
+    title: string;
+    callback: (evt: MouseEvent) => unknown;
+  }[] = [];
+
+  constructor(public file: { path: string; extension: string; name: string } | null) {}
+
+  addAction(icon: string, title: string, callback: (evt: MouseEvent) => unknown): HTMLElement {
+    const el = document.createElement("div");
+    el.dataset.icon = icon;
+    el.setAttribute("aria-label", title);
+    document.body.appendChild(el);
+    this.actions.push({ el, icon, title, callback });
+    return el;
+  }
+}

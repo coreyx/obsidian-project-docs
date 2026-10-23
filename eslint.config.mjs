@@ -25,6 +25,8 @@ export default defineConfig([
       "obsidianmd/prefer-create-el": "off",
       // Tests build plain objects shaped like files.
       "obsidianmd/no-tfile-tfolder-cast": "off",
+      // Tests swap a method on a stand-in's prototype and put it back afterwards.
+      "@typescript-eslint/unbound-method": "off",
     },
   },
 ]);

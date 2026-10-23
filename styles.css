@@ -1,0 +1,15 @@
+/* Project Docs. Everything uses Obsidian's own variables, so it follows the theme. */
+
+.project-docs-hidden {
+  display: none;
+}
+
+.project-docs-rule {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2-2);
+}
+
+.project-docs-rule-icon {
+  display: flex;
+}
