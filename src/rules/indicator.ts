@@ -4,6 +4,7 @@
  * opens the same choices as the file menu, with the same confirmation.
  */
 import { MarkdownView, Menu, setIcon, setTooltip, type App, type TFile } from "obsidian";
+import { DEFAULT_SETTINGS, type DisplaySettings } from "../settings.js";
 import { RULE_ICONS, RULE_LABELS, type RuleChanger } from "./menu.js";
 
 /** How a note's rule is shown: an icon and a label. */
@@ -28,6 +29,7 @@ export class RuleIndicator {
     private readonly app: App,
     private readonly rules: RuleChanger,
     private readonly statusEl: HTMLElement,
+    private readonly display: () => DisplaySettings = () => DEFAULT_SETTINGS,
   ) {
     statusEl.addClass("project-docs-rule", "mod-clickable");
     statusEl.addEventListener("click", (evt) => {
@@ -63,7 +65,7 @@ export class RuleIndicator {
 
   private refreshStatus(): void {
     const file = this.app.workspace.getActiveFile();
-    const place = file ? this.rules.placeOf(file) : null;
+    const place = file && this.display().ruleInStatusBar ? this.rules.placeOf(file) : null;
     this.statusEl.empty();
     this.statusEl.toggleClass("project-docs-hidden", !place);
     if (!file || !place) return;
@@ -75,7 +77,7 @@ export class RuleIndicator {
 
   private refreshAction(view: MarkdownView): void {
     const file = view.file;
-    const place = file ? this.rules.placeOf(file) : null;
+    const place = file && this.display().ruleInHeader ? this.rules.placeOf(file) : null;
     const existing = this.actions.get(view);
     if (!file || !place) {
       existing?.el.remove();

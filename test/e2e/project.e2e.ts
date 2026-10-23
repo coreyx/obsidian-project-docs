@@ -266,6 +266,65 @@ describe("the plugin in a linked project", function () {
     expect(await statusTexts()).toContain("Project Docs: 1 needs attention");
   });
 
+  it("lists the project in its settings tab, whose toggles take effect at once (TASK-16)", async function () {
+    // Obsidian's settings window isn't in the public API's types. From 1.13 it can open as a
+    // separate window, so the tab is reached through its own element rather than the document.
+    interface SettingsWindow {
+      open(): void;
+      openTabById(id: string): void;
+      close(): void;
+      activeTab: { id: string; containerEl: HTMLElement } | null;
+    }
+    await browser.executeObsidian(({ app }) => {
+      const setting = (app as unknown as { setting: SettingsWindow }).setting;
+      setting.open();
+      setting.openTabById("project-docs");
+    });
+    /** The open tab's text, or null while it isn't open. */
+    const tabText = () =>
+      browser.executeObsidian(({ app }) => {
+        const tab = (app as unknown as { setting: SettingsWindow }).setting.activeTab;
+        return tab?.id === "project-docs" ? (tab.containerEl.textContent ?? "") : null;
+      });
+    await until(
+      async () => (await tabText())?.includes("Linked projects") === true,
+      5_000,
+      "the settings tab",
+    );
+    const text = (await tabText()) ?? "";
+    expect(text).toContain(FOLDER);
+    expect(text).toContain("Private folder: private");
+    expect(text).toContain("Display");
+
+    /** Clicks the toggle of the setting named `name`, as a person would. */
+    const toggle = (name: string) =>
+      browser.executeObsidian(({ app }, label: string) => {
+        const tab = (app as unknown as { setting: SettingsWindow }).setting.activeTab;
+        const row = [...(tab?.containerEl.querySelectorAll(".setting-item") ?? [])].find(
+          (el) => el.querySelector(".setting-item-name")?.textContent?.trim() === label,
+        );
+        const control = row?.querySelector<HTMLElement>(".checkbox-container");
+        if (!control) throw new Error(`no toggle named ${label}`);
+        control.click();
+      }, name);
+    expect(await statusTexts()).toContain("Project Docs: 1 needs attention");
+    await toggle("Sync status in the status bar");
+    await until(
+      async () => !(await statusTexts()).includes("Project Docs: 1 needs attention"),
+      5_000,
+      "the sync status to hide",
+    );
+    await toggle("Sync status in the status bar");
+    await until(
+      async () => (await statusTexts()).includes("Project Docs: 1 needs attention"),
+      5_000,
+      "the sync status to come back",
+    );
+    await browser.executeObsidian(({ app }) => {
+      (app as unknown as { setting: SettingsWindow }).setting.close();
+    });
+  });
+
   describe("the decoded view (REQ-14.3, 15.3)", function () {
     const reals = MAPPING.map(([, real]) => real);
 

@@ -171,9 +171,7 @@ describe("ConfirmUnprivateModal", () => {
     expect(modal.title).toBe("Sync this note to the repo?");
     expect(modal.contentEl.textContent).toContain("plan.md is private");
     expect(modal.contentEl.textContent).toContain("as docs/plan.md");
-    expect(
-      Setting.buttons.map((b) => [b.text, b.buttonEl.classList.contains("mod-warning")]),
-    ).toEqual([
+    expect(Setting.buttons.map((b) => [b.text, b.destructive])).toEqual([
       ["Sync to repo", true],
       ["Cancel", false],
     ]);

@@ -13,12 +13,14 @@ import { ProjectIndex, SETTINGS_REFRESH_MS } from "./projects.js";
 import { confirmUnprivate } from "./rules/confirm-modal.js";
 import { RuleIndicator } from "./rules/indicator.js";
 import { RuleChanger } from "./rules/menu.js";
+import { ProjectDocsSettingTab, readSettings, type DisplaySettings } from "./settings.js";
 import { StatusDisplay } from "./status/banner.js";
 import { STATUS_POLL_MS, StatusReader, type ProjectStatusItem } from "./status/reader.js";
 
 /** The plugin Obsidian loads from main.js. */
 export default class ProjectDocsPlugin extends Plugin {
   projects!: ProjectIndex;
+  displaySettings!: DisplaySettings;
   private confirmations!: Confirmations;
   private marker!: PrivateMarker;
   private privateFiles!: PrivateFilesList;
@@ -27,8 +29,10 @@ export default class ProjectDocsPlugin extends Plugin {
   private status!: StatusReader;
   private statusDisplay!: StatusDisplay;
   private decoded!: DecodedViews;
+  private settingTab!: ProjectDocsSettingTab;
 
-  override onload(): void {
+  override async onload(): Promise<void> {
+    this.displaySettings = readSettings(await this.loadData());
     this.projects = new ProjectIndex(this.app);
     this.confirmations = new Confirmations(this.app);
     this.marker = new PrivateMarker(this.app, this.projects);
@@ -39,15 +43,19 @@ export default class ProjectDocsPlugin extends Plugin {
     });
     this.rules = new RuleChanger(this.app, this.projects, this.confirmations);
     this.status = new StatusReader(this.app, this.projects);
-    this.indicator = new RuleIndicator(this.app, this.rules, this.addStatusBarItem());
+    const display = (): DisplaySettings => this.displaySettings;
+    this.indicator = new RuleIndicator(this.app, this.rules, this.addStatusBarItem(), display);
     this.statusDisplay = new StatusDisplay(
       this.app,
       this.status,
       this.addStatusBarItem(),
       (file, item) => this.confirmSyncable(file, item),
+      display,
     );
     this.decoded = new DecodedViews(this.app, this.projects, this.addStatusBarItem());
 
+    this.settingTab = new ProjectDocsSettingTab(this.app, this);
+    this.addSettingTab(this.settingTab);
     this.registerView(DECODED_VIEW_TYPE, (leaf) => new DecodedNoteView(leaf, this.projects));
     this.addCommand({
       id: "toggle-decoded-view",
@@ -72,6 +80,7 @@ export default class ProjectDocsPlugin extends Plugin {
 
   private async start(): Promise<void> {
     await this.projects.refresh();
+    this.settingTab.update();
     const { vault, metadataCache, workspace } = this.app;
     this.registerEvent(
       vault.on("create", (file) => {
@@ -93,7 +102,13 @@ export default class ProjectDocsPlugin extends Plugin {
         this.refreshViews();
       }),
     );
-    this.registerEvent(this.projects.on("changed", () => void this.sweep()));
+    this.registerEvent(
+      this.projects.on("changed", () => {
+        // Obsidian keeps the tab's definitions from when it was added, for search and display.
+        this.settingTab.update();
+        void this.sweep();
+      }),
+    );
     this.registerEvent(
       this.status.on("changed", () => {
         this.statusDisplay.refresh();
@@ -109,6 +124,12 @@ export default class ProjectDocsPlugin extends Plugin {
     this.registerInterval(window.setInterval(() => void this.status.refresh(), STATUS_POLL_MS));
     await this.sweep();
     await this.status.refresh();
+    this.refreshViews();
+  }
+
+  /** Saves the display settings and applies them to every open view at once. */
+  async saveSettings(): Promise<void> {
+    await this.saveData(this.displaySettings);
     this.refreshViews();
   }
 

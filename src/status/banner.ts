@@ -4,6 +4,7 @@
  * as a change held back, a conflict, or a note that was private and waits for confirmation.
  */
 import { MarkdownView, setIcon, setTooltip, type App, type TFile } from "obsidian";
+import { DEFAULT_SETTINGS, type DisplaySettings } from "../settings.js";
 import type { ProjectStatusItem, StatusReader, Summary } from "./reader.js";
 
 /** The text and tooltip of the status bar item for a summary; null when it's hidden. */
@@ -41,11 +42,12 @@ export class StatusDisplay {
     private readonly status: StatusReader,
     private readonly statusEl: HTMLElement,
     private readonly confirmSyncable: ConfirmSyncable,
+    private readonly display: () => DisplaySettings = () => DEFAULT_SETTINGS,
   ) {}
 
   /** Brings the status bar item and every banner up to date. */
   refresh(): void {
-    const shown = summaryText(this.status.summary());
+    const shown = this.display().statusInStatusBar ? summaryText(this.status.summary()) : null;
     this.statusEl.toggleClass("project-docs-hidden", shown === null);
     this.statusEl.empty();
     if (shown) {
@@ -76,7 +78,7 @@ export class StatusDisplay {
 
   private refreshBanner(view: MarkdownView): void {
     const file = view.file;
-    const items = file ? this.status.itemsFor(file.path) : [];
+    const items = file && this.display().banners ? this.status.itemsFor(file.path) : [];
     const signature = JSON.stringify([
       file?.path,
       items.map((i) => [i.kind, i.message, i.reasons, i.fix]),

@@ -5,6 +5,7 @@ import { serializeStatusFile, type StatusItem } from "@specdevship/project-docs-
 import type { MetadataStore } from "../../src/metadata.js";
 import type { Project } from "../../src/projects.js";
 import { StatusDisplay, summaryText } from "../../src/status/banner.js";
+import { DEFAULT_SETTINGS, type DisplaySettings } from "../../src/settings.js";
 import { StatusReader, type ProjectStatusItem } from "../../src/status/reader.js";
 import { MarkdownView, TFile } from "../mocks/obsidian.js";
 import { PROJECT, fixedProjects } from "./helpers.js";
@@ -144,18 +145,26 @@ describe("StatusDisplay (REQ-17.2)", () => {
   let confirmed: string[];
   let display: StatusDisplay;
   let status: StatusReader;
+  let settings: DisplaySettings;
 
   beforeEach(async () => {
     views = [];
+    settings = { ...DEFAULT_SETTINGS };
     confirmed = [];
     status = reader([PROJECT]);
     statusEl = document.body.createDiv();
     const app = {
       workspace: { getLeavesOfType: () => views.map((view) => ({ view })) },
     } as unknown as App;
-    display = new StatusDisplay(app, status, statusEl, async (file, item) => {
-      confirmed.push(`${file.path}:${item.kind}`);
-    });
+    display = new StatusDisplay(
+      app,
+      status,
+      statusEl,
+      async (file, item) => {
+        confirmed.push(`${file.path}:${item.kind}`);
+      },
+      () => settings,
+    );
     setStatus(PROJECT, [heldBack, wasPrivate]);
     await status.refresh();
   });
@@ -167,6 +176,19 @@ describe("StatusDisplay (REQ-17.2)", () => {
     display.refresh();
     expect(statusEl.textContent).toBe("Project Docs: 2 need attention");
     expect(statusEl.getAttribute("aria-label")).toContain("guide.md isn't synced");
+  });
+
+  it("hides the status bar item and the banners when they're turned off (TASK-16)", () => {
+    const view = new MarkdownView(new TFile(`${P}/guide.md`));
+    views = [view];
+    display.refresh();
+    expect(view.contentEl.querySelector(".project-docs-banner")).not.toBeNull();
+    settings.statusInStatusBar = false;
+    settings.banners = false;
+    display.refresh();
+    expect(statusEl.classList.contains("project-docs-hidden")).toBe(true);
+    expect(statusEl.textContent).toBe("");
+    expect(view.contentEl.querySelector(".project-docs-banner")).toBeNull();
   });
 
   it("puts a banner with the message and reasons on a note that's held back", () => {

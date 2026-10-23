@@ -2,7 +2,7 @@
   "id": "project-docs",
   "name": "Project Docs",
   "version": "0.1.0",
-  "minAppVersion": "1.8.7",
+  "minAppVersion": "1.13.4",
   "description": "Keep a repo's docs folder in sync with your vault through the Project Docs VS Code extension, with private notes that never reach the repo.",
   "author": "Corey Struzan",
   "isDesktopOnly": true

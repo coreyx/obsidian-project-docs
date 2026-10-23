@@ -175,7 +175,7 @@ None at this time. Details that don't change the plan are settled in the task th
 ### Settings (added in a revision, 2026-10-23)
 
 #### [NEW] `src/settings.ts`; [MODIFY] `src/main.ts`, `src/rules/indicator.ts`, `src/status/banner.ts`, `README.md`
-- [ ] **TASK-16:** A settings tab, `ProjectDocsSettingTab`, with two sections.
+- [x] **TASK-16:** A settings tab, `ProjectDocsSettingTab`, with two sections.
   - **Linked projects, read-only:** for each project in the vault, its folder, its repo path, and whether the repo can be read right now (or that the safe defaults apply). Also its private folder, attachment sync and docs folder. A note says these come from the repo's committed `.project-docs.json`, shared with VS Code, the command line and anyone who clones the repo, so they're changed there and never from Obsidian. With no project, it says how to link one from VS Code.
   - **Display options:** toggles for the rule in the status bar, the rule icon in note headers, the sync status in the status bar, and the banners on notes. They're kept with `Plugin.saveData` and apply at once. All default to on, which is what REQ-9.0.1, 17.0.3 and 17.2 require; turning one off is the user's choice for their own Obsidian.
   - **Not hideable:** the "Decoded: real values shown" indicator (REQ-14.0.4) and the decoded-view toggle (REQ-15.0.5), since they're what tells the user real values are on screen.

@@ -92,6 +92,7 @@ export class Notice {
 /** A button in a Setting, with the handlers tests click. */
 export class ButtonComponent {
   text = "";
+  destructive = false;
   buttonEl = document.createElement("button");
   private handler: (() => unknown) | undefined;
 
@@ -104,6 +105,11 @@ export class ButtonComponent {
     return this;
   }
 
+  setDestructive(): this {
+    this.destructive = true;
+    return this;
+  }
+
   onClick(handler: () => unknown): this {
     this.handler = handler;
     return this;
@@ -112,6 +118,18 @@ export class ButtonComponent {
   click(): void {
     this.handler?.();
   }
+}
+
+/** A plugin's settings tab. The tab's definitions are read by tests rather than rendered. */
+export class PluginSettingTab {
+  containerEl = document.createElement("div");
+
+  constructor(
+    public app: unknown,
+    public plugin: Plugin,
+  ) {}
+
+  update(): void {}
 }
 
 /** A row of controls; only buttons are used. */

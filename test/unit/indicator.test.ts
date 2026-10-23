@@ -3,6 +3,7 @@ import type { App } from "obsidian";
 import type { Confirmations } from "../../src/privacy/confirmations.js";
 import { RuleIndicator, displayOf } from "../../src/rules/indicator.js";
 import { RuleChanger } from "../../src/rules/menu.js";
+import { DEFAULT_SETTINGS, type DisplaySettings } from "../../src/settings.js";
 import { MarkdownView, Menu, TFile } from "../mocks/obsidian.js";
 import { MemoryVault, PROJECT, fixedProjects } from "./helpers.js";
 
@@ -13,6 +14,7 @@ let views: MarkdownView[];
 let status: HTMLElement;
 let indicator: RuleIndicator;
 let menus: Menu[];
+let settings: DisplaySettings;
 const showAtMouseEvent = Menu.prototype.showAtMouseEvent;
 
 beforeEach(() => {
@@ -20,6 +22,7 @@ beforeEach(() => {
   active = null;
   views = [];
   menus = [];
+  settings = { ...DEFAULT_SETTINGS };
   const app = {
     vault: new MemoryVault(),
     metadataCache: { getFileCache: (file: TFile) => ({ frontmatter: frontmatter[file.path] }) },
@@ -35,7 +38,7 @@ beforeEach(() => {
     return this;
   };
   status = document.body.createDiv();
-  indicator = new RuleIndicator(app, rules, status);
+  indicator = new RuleIndicator(app, rules, status, () => settings);
 });
 afterEach(() => {
   Menu.prototype.showAtMouseEvent = showAtMouseEvent;
@@ -115,6 +118,28 @@ describe("the header action (REQ-9.0.1)", () => {
     indicator.clear();
     expect(views[0]?.actions[0]?.el.isConnected).toBe(false);
     expect(status.textContent).toBe("");
+  });
+});
+
+describe("the display settings (TASK-16)", () => {
+  it("hides the status bar item and the header actions when they're turned off", () => {
+    const view = new MarkdownView(new TFile(`${P}/guide.md`));
+    views = [view];
+    active = new TFile(`${P}/guide.md`);
+    settings.ruleInStatusBar = false;
+    settings.ruleInHeader = false;
+    indicator.refresh();
+    expect(status.classList.contains("project-docs-hidden")).toBe(true);
+    expect(status.textContent).toBe("");
+    expect(view.actions).toEqual([]);
+
+    settings.ruleInHeader = true;
+    indicator.refresh();
+    expect(view.actions).toHaveLength(1);
+    settings.ruleInHeader = false;
+    indicator.refresh();
+    expect(view.actions[0]?.el.isConnected).toBe(false);
+    expect(status.classList.contains("project-docs-hidden")).toBe(true);
   });
 });
 

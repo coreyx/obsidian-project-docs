@@ -63,3 +63,14 @@ const scope = window as unknown as Record<string, unknown>;
 scope.activeDocument = document;
 scope.activeWindow = window;
 scope.createDiv = (info?: ElementInfo | string) => build("div", info);
+scope.createFragment = (callback?: (fragment: DocumentFragment) => void) => {
+  const fragment = document.createDocumentFragment();
+  callback?.(fragment);
+  return fragment;
+};
+(DocumentFragment.prototype as unknown as Record<string, unknown>).createDiv = function (
+  this: DocumentFragment,
+  info?: ElementInfo | string,
+) {
+  return this.appendChild(build("div", info));
+};

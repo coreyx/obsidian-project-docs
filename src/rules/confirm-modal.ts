@@ -3,16 +3,7 @@
  * and says where in the repo it will be copied, since that is the one rule change that sends
  * content to the repo.
  */
-import { Modal, Setting, type App, type ButtonComponent } from "obsidian";
-
-/**
- * Styles a button as one that does something hard to undo, with the class Obsidian itself uses.
- * `setDestructive` needs Obsidian 1.13, and `setWarning`, which the plugin's 1.8.7 minimum has,
- * is deprecated.
- */
-function markDestructive(button: ButtonComponent): void {
-  button.buttonEl.addClass("mod-warning");
-}
+import { Modal, Setting, type App } from "obsidian";
 
 /** Asks whether a private note may sync. Resolves true only if the user chooses to. */
 export class ConfirmUnprivateModal extends Modal {
@@ -35,8 +26,10 @@ export class ConfirmUnprivateModal extends Modal {
     });
     new Setting(this.contentEl)
       .addButton((button) => {
-        button.setButtonText("Sync to repo").onClick(() => this.answer(true));
-        markDestructive(button);
+        button
+          .setButtonText("Sync to repo")
+          .setDestructive()
+          .onClick(() => this.answer(true));
       })
       .addButton((button) => button.setButtonText("Cancel").onClick(() => this.answer(false)));
   }

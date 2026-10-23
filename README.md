@@ -9,7 +9,7 @@ This plugin never syncs anything itself. The Project Docs VS Code extension, or 
 - it shows the sync status and any problems on the notes they concern;
 - it shows notes that use [PRIVATE.md](https://github.com/coreyx/private-md-standard) placeholders with their real values, read-only.
 
-It needs Obsidian 1.8.7 or later on the desktop.
+It needs Obsidian 1.13.4 or later on the desktop.
 
 ## Install
 
@@ -85,6 +85,15 @@ The plugin reads PRIVATE.md from the repo, through the path in the link note. It
 
 If the project uses Advanced URI deep links, which the VS Code extension sets up, **`uid: <project id>` belongs in the project folder's folder note**. That anchors the link to the project folder rather than to whichever note happens to hold it, so it keeps working however the folder's contents change. If you add the `uid` yourself, put it there.
 
+## Settings
+
+The plugin's tab in Obsidian's settings has two parts:
+
+- **Linked projects** lists each project in the vault with its repo, docs folder, private folder and whether attachment sync is on. These are shown read-only: they live in the repo's committed `.project-docs.json`, shared with VS Code, the command line and anyone who clones the repo, so change them there.
+- **Display** turns each of these on or off: the sync rule in the status bar, the sync rule icon in note headers, the sync status in the status bar, and banners on notes. All are on to begin with, and a change applies at once.
+
+The decoded view's toggle, and the status bar item that says when real values are on screen, are always shown.
+
 ## What it reads and writes
 
 - **Reads:**
@@ -94,6 +103,7 @@ If the project uses Advanced URI deep links, which the VS Code extension sets up
 - **Writes:**
   - the `project-docs` property of a note, when it arrives in a private folder or when you choose a rule;
   - `.project-docs/private-files.json` and `.project-docs/confirmations.json` in the project folder.
+  - its display settings, in Obsidian's usual place for a plugin's settings (`data.json` in the plugin's folder).
 
 Obsidian hides the `.project-docs` folder, and syncing never copies it to the repo.
 
