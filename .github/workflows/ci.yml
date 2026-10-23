@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format
+      - run: npm run build
+      - run: npm run coverage
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: coverage
+          path: coverage/
+
+  e2e:
+    name: end-to-end (Obsidian ${{ matrix.versions }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # The manifest's minAppVersion on its oldest installer, and the latest release.
+        versions: ["earliest/earliest", "latest/latest"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # The resolved Obsidian versions are the cache key, so a new release is downloaded once.
+      - name: Resolve Obsidian versions
+        run: |
+          npx tsx wdio.conf.mts | grep 'obsidian-cache-key:' > obsidian-versions-lock.txt
+          rm -rf .obsidian-cache
+        env:
+          OBSIDIAN_VERSIONS: ${{ matrix.versions }}
+      - uses: actions/cache@v4
+        with:
+          path: .obsidian-cache
+          key: obsidian-${{ hashFiles('obsidian-versions-lock.txt') }}
+      # Obsidian needs a display: a virtual X server, with a window manager for focus and menus.
+      - name: Start a virtual display
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -q -y herbstluftwm x11-xserver-utils
+          echo "DISPLAY=:99" >> "$GITHUB_ENV"
+          Xvfb :99 -screen 0 1280x1024x24 +extension GLX -noreset &
+          sleep 1
+          DISPLAY=:99 herbstluftwm &
+          sleep 1
+      - run: npm run test:e2e
+        env:
+          OBSIDIAN_VERSIONS: ${{ matrix.versions }}
+          WDIO_MAX_INSTANCES: 1

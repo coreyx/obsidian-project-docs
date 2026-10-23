@@ -62,7 +62,7 @@ None at this time. Details that don't change the plan are settled in the task th
   - **Repo files:** an MIT `LICENSE` (Corey Struzan), a README stub, a CHANGELOG with `## [Unreleased]`, and a `.gitignore`.
 
 #### [NEW] `.github/workflows/ci.yml`
-- [ ] **TASK-2:** CI on every push and pull request.
+- [x] **TASK-2:** CI on every push and pull request.
   - **Every system:** lint, typecheck, build and unit tests with coverage on `windows-latest`, `macos-latest` and `ubuntu-latest`. The build fails below the coverage thresholds.
   - **Linux:** the end-to-end tests under `xvfb`, against the `minAppVersion` and the latest Obsidian.
 

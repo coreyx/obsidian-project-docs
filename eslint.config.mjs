@@ -13,4 +13,10 @@ export default defineConfig([
       },
     },
   },
+  {
+    // Test and build code isn't shipped in the plugin: it may log, and TypeScript, not ESLint,
+    // checks that names such as Mocha's globals exist.
+    files: ["test/**", "*.mjs", "*.mts"],
+    rules: { "no-console": "off", "obsidianmd/rule-custom-message": "off", "no-undef": "off" },
+  },
 ]);

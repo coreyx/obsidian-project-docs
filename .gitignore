@@ -4,3 +4,4 @@ coverage/
 .obsidian-cache/
 *.tsbuildinfo
 data.json
+obsidian-versions-lock.txt
