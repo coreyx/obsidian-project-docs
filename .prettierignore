@@ -1,0 +1,6 @@
+main.js
+node_modules/
+coverage/
+.obsidian-cache/
+package-lock.json
+spec/

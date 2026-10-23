@@ -53,7 +53,7 @@ None at this time. Details that don't change the plan are settled in the task th
 ### Repository and build
 
 #### [NEW] `package.json`, `tsconfig.json`, `esbuild.config.mjs`, `eslint.config.mjs`, `.prettierrc.json`, `manifest.json`, `versions.json`, `LICENSE`, `README.md`, `CHANGELOG.md`, `.gitignore`, `.specdevship/current-spec`
-- [ ] **TASK-1:** Scaffold the plugin from the shape of Obsidian's sample plugin.
+- [x] **TASK-1:** Scaffold the plugin from the shape of Obsidian's sample plugin.
   - **Manifest:** id `project-docs`, name `Project Docs`, `isDesktopOnly: true`, and `minAppVersion` set to the oldest Obsidian version whose API covers every call the plugin makes.
   - **Dependencies:** `@specdevship/project-docs-core` at exactly `0.1.0`; `obsidian` as a type dependency.
   - **Build:** esbuild bundling `src/main.ts` to CommonJS `main.js`, with `obsidian`, `electron`, `@codemirror/*` and Node's built-ins external.

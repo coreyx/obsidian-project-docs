@@ -1,0 +1,2 @@
+# Check out text files with LF on every platform, so Prettier and byte-level tests agree everywhere.
+* text=auto eol=lf
