@@ -27,6 +27,9 @@ export default defineConfig([
       "obsidianmd/no-tfile-tfolder-cast": "off",
       // Tests swap a method on a stand-in's prototype and put it back afterwards.
       "@typescript-eslint/unbound-method": "off",
+      // The rendering stand-in turns Markdown lines into HTML, as Obsidian's renderer does.
+      "no-unsanitized/property": "off",
+      "@microsoft/sdl/no-inner-html": "off",
     },
   },
 ]);

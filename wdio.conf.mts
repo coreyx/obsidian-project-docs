@@ -20,8 +20,6 @@ export const config: WebdriverIO.Config = {
   runner: "local",
   framework: "mocha",
   specs: ["./test/e2e/**/*.e2e.ts"],
-  // The decoded-view prototype measures rather than tests, so it runs only when asked for.
-  exclude: env.PROTOTYPE ? [] : ["./test/e2e/prototype/**"],
   maxInstances: Number(env.WDIO_MAX_INSTANCES || 2),
   capabilities: versions.map(([appVersion, installerVersion]) => ({
     browserName: "obsidian",

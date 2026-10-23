@@ -16,8 +16,9 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      // main.ts only wires components to Obsidian; the end-to-end tests cover it.
-      exclude: ["src/main.ts"],
+      // These only wire components to Obsidian's workspace and views; the end-to-end tests in a
+      // real Obsidian cover them.
+      exclude: ["src/main.ts", "src/decode/view.ts"],
       thresholds: {
         lines: 80,
         branches: 70,

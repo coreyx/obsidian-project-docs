@@ -70,9 +70,10 @@ export const MarkdownRenderer = {
     _component: Component,
   ): Promise<void> {
     this.calls.push({ markdown, sourcePath });
+    // Obsidian renders inline HTML in Markdown, which the decoded view relies on for embed slots.
     for (const line of markdown.split("\n")) {
       const p = document.createElement("p");
-      p.textContent = line;
+      p.innerHTML = line;
       el.appendChild(p);
     }
     await this.onRender?.(el, sourcePath);
@@ -234,4 +235,24 @@ export class MarkdownView {
     this.actions.push({ el, icon, title, callback });
     return el;
   }
+}
+
+/**
+ * Obsidian's YAML parser, for the flat frontmatter tests use: `key: value` lines and `[a, b]`
+ * lists. Anything else throws, as unreadable YAML does in Obsidian.
+ */
+export function parseYaml(text: string): unknown {
+  const result: Record<string, unknown> = {};
+  for (const line of text.split("\n").filter((l) => l.trim() !== "")) {
+    const match = /^([\w-]+):\s*(.*)$/.exec(line);
+    if (!match) throw new Error(`can't parse ${line}`);
+    const value = match[2] ?? "";
+    result[match[1] ?? ""] = /^\[.*\]$/.test(value)
+      ? value
+          .slice(1, -1)
+          .split(",")
+          .map((v) => v.trim())
+      : value;
+  }
+  return result;
 }

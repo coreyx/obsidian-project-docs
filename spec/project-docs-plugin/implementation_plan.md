@@ -130,7 +130,7 @@ None at this time. Details that don't change the plan are settled in the task th
 ### Decoded view
 
 #### [NEW] `src/decode/private-md.ts`, `src/decode/view.ts`, `src/decode/fallback-view.ts`
-- [ ] **TASK-11:** `DecodedView` (REQ-14.0.2 to 14.0.6, 15.0.5, 15.3), built on TASK-3's result.
+- [x] **TASK-11:** `DecodedView` (REQ-14.0.2 to 14.0.6, 15.0.5, 15.3), built on TASK-3's result.
   - **The toggle:** a header action on every Markdown note in a project whose repo has a PRIVATE.md, so it's visible without opening a menu.
   - **Reading PRIVATE.md:** read from the repo path in the folder note with the core's `loadPlaceholders()`, never copied into the vault. That includes `\\wsl.localhost\...` paths.
   - **Decoded mode:**
