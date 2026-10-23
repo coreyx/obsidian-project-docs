@@ -143,7 +143,7 @@ None at this time. Details that don't change the plan are settled in the task th
 ### Plugin entry point and documentation
 
 #### [NEW] `src/main.ts`
-- [ ] **TASK-12:** `ProjectDocsPlugin`, which wires the components together. It registers every event, view, command and post-processor through the plugin's `register*` methods, so unloading the plugin removes all of them, and does nothing in a vault with no linked project.
+- [x] **TASK-12:** `ProjectDocsPlugin`, which wires the components together. It registers every event, view, command and post-processor through the plugin's `register*` methods, so unloading the plugin removes all of them, and does nothing in a vault with no linked project.
 
 #### [MODIFY] `README.md`
 - [ ] **TASK-13:** The user guide.
