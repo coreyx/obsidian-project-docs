@@ -4,18 +4,19 @@ The Obsidian half of Project Docs, built against `@specdevship/project-docs-core
 - marks private notes, and tracks private attachments;
 - changes sync rules with the mouse, asking before a private note becomes syncable;
 - shows the sync engine's status, with a banner on the notes it concerns;
-- shows a note decoded, read-only, in a separate view.
+- shows a note decoded, read-only, in a separate view;
+- has a settings tab listing the linked projects, with switches for its displays.
 
 It never syncs. The user guide is the [README](../../README.md).
 
 ## What was implemented
 
 ### 1. Repository, build and release (TASK-1, TASK-2, TASK-15)
-- **Manifest:** `manifest.json` (`project-docs`, desktop only, `minAppVersion` 1.8.7) and `versions.json`.
+- **Manifest:** `manifest.json` (`project-docs`, desktop only, `minAppVersion` 1.13.4) and `versions.json`.
 - **Build:** esbuild bundles the core into `main.js`. TypeScript runs in strict mode, with ESLint using `eslint-plugin-obsidianmd` (the store reviewers' rules) and Prettier.
 - **Unit tests:** Vitest in happy-dom, with Obsidian's DOM helpers recreated (`test/mocks/dom.ts`) and a stand-in `obsidian` module (`test/mocks/obsidian.ts`).
-- **CI (`.github/workflows/ci.yml`):** lint, format, build and unit tests with coverage on Windows, macOS and Linux. On Linux, the end-to-end tests run in a sandboxed Obsidian through wdio-obsidian-service, at 1.8.7 on its oldest installer and at the latest release.
-- **Releases:** `.github/workflows/release.yml` builds a draft release from a bare version tag. `npm version` updates `manifest.json` and `versions.json` together.
+- **CI (`.github/workflows/ci.yml`):** lint, format, build and unit tests with coverage on Windows, macOS and Linux. On Linux, the end-to-end tests run in a sandboxed Obsidian through wdio-obsidian-service, at the minimum version on its oldest installer and at the latest release.
+- **Releases:** `.github/workflows/release.yml` builds a draft release from a bare version tag, and publishes a pre-release tag (`0.1.0-beta.1`) at once as a GitHub pre-release for BRAT. `pnpm version` updates `manifest.json` and `versions.json` together.
 
 ### 2. The decoded-view prototype (TASK-3)
 - **What it measured:** reading-view decoding, section by section, on ten notes in two Obsidian versions.
@@ -53,12 +54,17 @@ It never syncs. The user guide is the [README](../../README.md).
 - **`src/main.ts`:** registers everything through `Plugin.register*`. Vault events start once the layout is ready, after a sweep.
 - **`README.md`:** the user guide, including that `uid: <project id>` belongs in the folder note (REQ-2.10), and exactly what the plugin reads and writes.
 
+### 9. Settings tab (TASK-16): `src/settings.ts`
+- **Linked projects:** each project's folder, repo, docs folder, private folder and attachment sync, read-only, since they come from the repo's committed `.project-docs.json`. With no project, it says how to link one.
+- **Display:** toggles for the rule in the status bar, the rule icon in note headers, the sync status in the status bar, and the banners. They're saved with `saveData`, default to on, and apply at once. The decoded view's toggle and indicator can't be hidden.
+- **Obsidian 1.13:** the tab uses the declarative settings API, so its settings appear in settings search. That raised `minAppVersion` from 1.8.7 to 1.13.4, the first public 1.13 release, as you asked. The confirm button now uses `setDestructive`, which the old minimum lacked.
+
 ## Verification & test results
 
 ### Automated tests
-- **Unit tests (`npm run coverage`):** 119 passed. Coverage is 97.4% of lines and 89.8% of branches; `src/privacy/` is above its 90% line threshold.
+- **Unit tests (`pnpm run coverage`):** 130 passed. Coverage is 99.0% of lines and 90.4% of branches; `src/privacy/` is above its 90% line threshold.
   - `src/main.ts` and `src/decode/view.ts` are excluded from unit coverage. They only wire components to Obsidian, and the end-to-end tests cover them.
-- **End-to-end tests (`npm run test:e2e`):** 20 passed in Obsidian 1.8.7 (installer 1.5.8) and 20 in 1.14.5, both locally on Windows and in CI on Linux.
+- **End-to-end tests (`pnpm run test:e2e`):** 21 passed in Obsidian 1.13.4 (installer 1.5.8) and 21 in 1.14.5, both locally on Windows and in CI on Linux. Before the minimum moved, 20 passed in 1.8.7 and 1.14.5.
 
 | Criterion | Test | Result |
 |---|---|---|
@@ -72,16 +78,16 @@ It never syncs. The user guide is the [README](../../README.md).
 | 14.3, 15.3 | The eye shows without a menu; the decoded view shows real values with its indicator, in footnotes, properties and embeds too; no file changes | Passed |
 | 14.4 | Without PRIVATE.md, the standard's error and nothing decoded | Passed |
 | 15.4 | With an empty table, the note as it is, with the note | Passed |
+| TASK-16 | The settings tab lists the fixture's project; turning off the sync status hides it, and turning it on brings it back | Passed |
 | 2.10 | The README states that `uid: <project id>` belongs in the folder note | Done (documentation) |
 
 ### What failed along the way, and what was done
 - **The end-to-end tests' first run:**
   - The menu tests failed on WebdriverIO's "element with this text" selectors under a parent. They now click by text in the page.
   - The attachment test failed because Obsidian's rename doesn't create the destination folder. The test creates it.
-- **The confirm button's style:**
-  - `setWarning` is deprecated, and the store's lint rules don't allow switching that check off.
-  - `setDestructive` needs Obsidian 1.13, and the rules also flag it against the 1.8.7 minimum, even behind a feature check.
-  - The button gets Obsidian's own `mod-warning` class instead.
+- **The confirm button's style:** with the 1.8.7 minimum, `setWarning` was deprecated and `setDestructive` didn't exist yet, so the button used Obsidian's `mod-warning` class. Since the minimum moved to 1.13.4, it uses `setDestructive`.
+- **The settings tab's project list:** the end-to-end test found the tab saying "No linked projects" in a vault with one. Obsidian reads a tab's definitions when it's added, which is before the plugin finds its projects, and keeps them. The plugin now calls the tab's `update()` after its first look for projects and whenever the list changes.
+- **Opening the settings in a test:** from 1.13, Obsidian can open its settings in a separate window, so the test reaches the tab through its own element rather than the main window's page.
 
 ## Manual verification
 These need the VS Code extension and more than one machine, so they belong to TASK-31 of the main spec.
