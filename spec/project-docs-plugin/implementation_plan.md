@@ -158,7 +158,7 @@ None at this time. Details that don't change the plan are settled in the task th
 ### Tests and release
 
 #### [NEW] `test/unit/*.test.ts`, `test/e2e/*.e2e.ts`, `wdio.conf.mts`
-- [ ] **TASK-14:** End-to-end tests in a sandboxed vault with a linked test repo. Each test names its criterion:
+- [x] **TASK-14:** End-to-end tests in a sandboxed vault with a linked test repo. Each test names its criterion:
   - **10.1:** a note created in `private/` gets the marker within 2 seconds.
   - **10.3:** a file placed there before Obsidian starts is marked on start.
   - **9.1 and 9.3:** every rule change from the file menu takes at most three clicks, and cancelling un-privating leaves the note private.
