@@ -23,6 +23,15 @@ export class TFile {
   }
 }
 
+/** The vault's access to the filesystem on desktop. */
+export class FileSystemAdapter {
+  constructor(private readonly basePath = "") {}
+
+  getBasePath(): string {
+    return this.basePath;
+  }
+}
+
 /** Obsidian's event emitter. */
 export class Events {
   private readonly handlers = new Map<string, ((...data: unknown[]) => unknown)[]>();

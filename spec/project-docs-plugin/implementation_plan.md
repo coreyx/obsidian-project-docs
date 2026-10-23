@@ -94,7 +94,7 @@ None at this time. Details that don't change the plan are settled in the task th
   - Its own writes don't trigger it again.
 
 #### [NEW] `src/privacy/private-files.ts`
-- [ ] **TASK-6:** `PrivateFilesList` (REQ-11.0.3), for projects with attachment sync on.
+- [x] **TASK-6:** `PrivateFilesList` (REQ-11.0.3), for projects with attachment sync on.
   - It records `{ path, sha256 }` for each non-Markdown file created in, or moved into, the private folder. The hash is the core's `sha256()` of the raw bytes.
   - It follows recorded files through renames anywhere in the project, and updates the hash when a recorded file changes in Obsidian.
   - Its startup sweep records unrecorded files in the private folder.
