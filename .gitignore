@@ -5,3 +5,4 @@ coverage/
 *.tsbuildinfo
 data.json
 obsidian-versions-lock.txt
+test/e2e/out/

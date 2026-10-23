@@ -9,6 +9,9 @@ export default defineConfig({
   },
   test: {
     include: ["test/unit/**/*.test.ts"],
+    // The plugin works with the DOM, and Obsidian adds helpers to it that the setup file recreates.
+    environment: "happy-dom",
+    setupFiles: ["test/mocks/dom.ts"],
     testTimeout: 30_000,
     coverage: {
       provider: "v8",

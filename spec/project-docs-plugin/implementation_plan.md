@@ -69,7 +69,7 @@ None at this time. Details that don't change the plan are settled in the task th
 ### The decoded-view prototype
 
 #### [NEW] `src/decode/reading.ts`, `test/e2e/vault/prototype/*.md`, `spec/project-docs-plugin/prototype.md`
-- [ ] **TASK-3:** Prototype reading-view decoding (design decision 14).
+- [x] **TASK-3:** Prototype reading-view decoding (design decision 14).
   - A Markdown post-processor that takes each rendered section's source lines through `ctx.getSectionInfo(el)`, decodes them with the core's `restore()`, and re-renders the section with `MarkdownRenderer.render`.
   - Then the completeness check: run `placeholderPattern()` for every mapped placeholder over the view's rendered text, and confirm that every section had source info.
   - Run it end to end on test notes with callouts, embeds of other notes, tables, footnotes, fenced code, inline code and a placeholder split across formatting.

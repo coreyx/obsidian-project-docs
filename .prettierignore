@@ -4,3 +4,4 @@ coverage/
 .obsidian-cache/
 package-lock.json
 spec/
+test/e2e/out/

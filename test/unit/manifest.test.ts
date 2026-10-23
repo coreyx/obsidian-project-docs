@@ -1,11 +1,10 @@
 import { readFileSync } from "node:fs";
+import * as path from "node:path";
 import { describe, expect, it } from "vitest";
 
+// Resolved from the repo root, where Vitest runs; the DOM test environment replaces `URL`.
 const read = (file: string) =>
-  JSON.parse(readFileSync(new URL(`../../${file}`, import.meta.url), "utf8")) as Record<
-    string,
-    unknown
-  >;
+  JSON.parse(readFileSync(path.resolve(file), "utf8")) as Record<string, unknown>;
 
 const manifest = read("manifest.json");
 const versions = read("versions.json");
