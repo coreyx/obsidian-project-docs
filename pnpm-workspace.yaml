@@ -18,7 +18,7 @@ peerDependencyRules:
 # pnpm holds back packages published very recently. The core is this project's own package,
 # published by its maintainer.
 minimumReleaseAgeExclude:
-  - "@specdevship/project-docs-core@0.1.0"
+  - "@specdevship/project-docs-core@0.2.0"
 
 # `pnpm version` tags the bare version (0.1.0, not v0.1.0), which Obsidian and BRAT expect.
 tagVersionPrefix: ""

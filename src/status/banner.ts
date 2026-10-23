@@ -32,6 +32,9 @@ export function summaryText(summary: Summary): { text: string; tooltip: string }
 /** Confirms that a note which was private may sync; wired to the confirmation dialog. */
 export type ConfirmSyncable = (file: TFile, item: ProjectStatusItem) => Promise<void>;
 
+/** Records what the user chose for notes that became ignored by git (design decision 20). */
+export type ChooseIgnored = (item: ProjectStatusItem, choice: "sync" | "stop") => Promise<void>;
+
 /** Keeps the status bar item and the banners in step with the engine's status. */
 export class StatusDisplay {
   /** Each view's banner, and the items it shows, so an unchanged banner isn't rebuilt. */
@@ -43,6 +46,7 @@ export class StatusDisplay {
     private readonly statusEl: HTMLElement,
     private readonly confirmSyncable: ConfirmSyncable,
     private readonly display: () => DisplaySettings = () => DEFAULT_SETTINGS,
+    private readonly chooseIgnored: ChooseIgnored = async () => {},
   ) {}
 
   /** Brings the status bar item and every banner up to date. */
@@ -106,6 +110,25 @@ export class StatusDisplay {
     if (item.fix === "confirm-syncable") {
       const button = row.createEl("button", { text: "Sync to repo…" });
       button.addEventListener("click", () => void this.confirmSyncable(file, item));
+    }
+    if (item.kind === "now-ignored") {
+      // Keeping isn't offered where it can't work, such as in node_modules, which never syncs.
+      const choices: ["sync" | "stop", string][] =
+        item.fix === "sync-ignored"
+          ? [
+              ["sync", "Keep syncing it"],
+              ["stop", "Stop syncing it"],
+            ]
+          : [["stop", "Stop syncing it"]];
+      const buttons = choices.map(([choice, text]) => {
+        const button = row.createEl("button", { text });
+        button.addEventListener("click", () => {
+          // The engine carries the choice out on its next pass; until then, one is enough.
+          for (const b of buttons) b.disabled = true;
+          void this.chooseIgnored(item, choice);
+        });
+        return button;
+      });
     }
   }
 }

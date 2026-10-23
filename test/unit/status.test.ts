@@ -31,6 +31,22 @@ const wasPrivate: StatusItem = {
   fix: "confirm-syncable",
 };
 
+const draftsIgnored: StatusItem = {
+  kind: "now-ignored",
+  path: "drafts/",
+  message: "drafts/ is ignored by git, so its synced file has stopped syncing.",
+  reasons: ["drafts/a.md"],
+  fix: "sync-ignored",
+};
+const modulesIgnored: StatusItem = {
+  kind: "now-ignored",
+  path: "site/node_modules/",
+  message:
+    "site/node_modules/ is in node_modules, which never syncs, so its synced file has stopped syncing.",
+  reasons: ["site/node_modules/pkg/README.md"],
+  fix: "stop-syncing",
+};
+
 let files: Map<string, string>;
 let reads: number;
 const store: MetadataStore = {
@@ -58,6 +74,26 @@ function reader(projects: Project[] = [PROJECT, OTHER]): StatusReader {
 beforeEach(() => {
   files = new Map();
   reads = 0;
+});
+
+describe("StatusReader and folder items (TASK-17)", () => {
+  it("gives a folder's item for every note inside it", async () => {
+    const status = reader();
+    setStatus(PROJECT, [draftsIgnored]);
+    await status.refresh();
+    expect(status.itemsFor(`${P}/drafts/a.md`).map((i) => i.path)).toEqual(["drafts/"]);
+    expect(status.itemsFor(`${P}/drafts/deeper/b.md`).map((i) => i.path)).toEqual(["drafts/"]);
+    expect(status.itemsFor(`${P}/drafts-old/a.md`)).toEqual([]);
+    expect(status.itemsFor(`${P}/drafts.md`)).toEqual([]);
+  });
+
+  it("gives a project's items, or null while it has no status", async () => {
+    const status = reader();
+    setStatus(PROJECT, [draftsIgnored]);
+    await status.refresh();
+    expect(status.itemsOf(PROJECT)?.map((i) => i.path)).toEqual(["drafts/"]);
+    expect(status.itemsOf(OTHER)).toBeNull();
+  });
 });
 
 describe("StatusReader", () => {
@@ -146,9 +182,11 @@ describe("StatusDisplay (REQ-17.2)", () => {
   let display: StatusDisplay;
   let status: StatusReader;
   let settings: DisplaySettings;
+  let chosen: string[];
 
   beforeEach(async () => {
     views = [];
+    chosen = [];
     settings = { ...DEFAULT_SETTINGS };
     confirmed = [];
     status = reader([PROJECT]);
@@ -164,6 +202,9 @@ describe("StatusDisplay (REQ-17.2)", () => {
         confirmed.push(`${file.path}:${item.kind}`);
       },
       () => settings,
+      async (item, choice) => {
+        chosen.push(`${item.path}:${choice}`);
+      },
     );
     setStatus(PROJECT, [heldBack, wasPrivate]);
     await status.refresh();
@@ -201,6 +242,32 @@ describe("StatusDisplay (REQ-17.2)", () => {
     expect(banner?.querySelector("li")?.textContent).toBe("links to the private note server-notes");
     expect(banner?.querySelector("button")).toBeNull();
     expect(clean.contentEl.querySelector(".project-docs-banner")).toBeNull();
+  });
+
+  it("offers to keep or stop syncing a note whose folder became ignored (AC 3.10)", async () => {
+    setStatus(PROJECT, [draftsIgnored]);
+    await status.refresh();
+    const view = new MarkdownView(new TFile(`${P}/drafts/a.md`));
+    views = [view];
+    display.refresh();
+    const buttons = [...view.contentEl.querySelectorAll("button")];
+    expect(buttons.map((b) => b.textContent)).toEqual(["Keep syncing it", "Stop syncing it"]);
+    buttons[0]?.click();
+    expect(chosen).toEqual(["drafts/:sync"]);
+    // One choice is enough until the engine's next pass.
+    expect(buttons.every((b) => b.disabled)).toBe(true);
+  });
+
+  it("offers only to stop syncing in node_modules, which never syncs", async () => {
+    setStatus(PROJECT, [modulesIgnored]);
+    await status.refresh();
+    const view = new MarkdownView(new TFile(`${P}/site/node_modules/pkg/README.md`));
+    views = [view];
+    display.refresh();
+    const buttons = [...view.contentEl.querySelectorAll("button")];
+    expect(buttons.map((b) => b.textContent)).toEqual(["Stop syncing it"]);
+    buttons[0]?.click();
+    expect(chosen).toEqual(["site/node_modules/:stop"]);
   });
 
   it("offers to sync a note that was private, through the confirmation", () => {

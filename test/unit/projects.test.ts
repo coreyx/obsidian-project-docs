@@ -25,6 +25,7 @@ function committed(overrides: Partial<CommittedLink> = {}): CommittedLink {
       keepLinksAsWritten: false,
       allowLinksOutsideProjectFolder: false,
       advancedUriDeepLinks: false,
+      syncIgnored: [],
     },
     ...overrides,
   };

@@ -9,6 +9,7 @@ import { obsidianPage } from "wdio-obsidian-service";
 import {
   markdownHash,
   parseConfirmations,
+  parseIgnoredChoices,
   serializeStatusFile,
 } from "@specdevship/project-docs-core/status";
 import { FOLDER, MAPPING, buildFixture, type Fixture } from "./fixture.js";
@@ -265,6 +266,58 @@ describe("the plugin in a linked project", function () {
     expect(await banner.getText()).toContain("links to the private note server-notes");
     expect(await statusTexts()).toContain("Project Docs: 1 needs attention");
   });
+
+  for (const [button, choice] of [
+    ["Keep syncing it", "sync"],
+    ["Stop syncing it", "stop"],
+  ] as const) {
+    it(`records "${button}" for a folder that became ignored, for the engine (AC 3.10)`, async function () {
+      const folderName = `ignored-${choice}`;
+      await mkdir(onDisk(folderName), { recursive: true });
+      await writeFile(onDisk(`${folderName}/a.md`), "A note git now ignores.\n");
+      await mkdir(onDisk(".project-docs"), { recursive: true });
+      await writeFile(
+        onDisk(".project-docs/status.json"),
+        serializeStatusFile({
+          updatedAt: new Date().toISOString(),
+          state: "attention",
+          items: [
+            {
+              kind: "now-ignored",
+              path: `${folderName}/`,
+              message: `${folderName}/ is ignored by git, so its synced file has stopped syncing.`,
+              reasons: [`${folderName}/a.md`],
+              fix: "sync-ignored",
+            },
+          ],
+        }),
+      );
+      await until(
+        async () =>
+          await browser.executeObsidian(
+            ({ app }, p: string) => app.vault.getAbstractFileByPath(p) !== null,
+            `${FOLDER}/${folderName}/a.md`,
+          ),
+        5_000,
+        `${folderName}/a.md`,
+      );
+      await open(`${folderName}/a.md`);
+      const banner = $(".workspace-leaf.mod-active .project-docs-banner");
+      await banner.waitForDisplayed({ timeout: 8_000 });
+      expect(await banner.getText()).toContain(`${folderName}/ is ignored by git`);
+      await clickText(".workspace-leaf.mod-active .project-docs-banner button", button);
+      await until(
+        async () => (await read(".project-docs/ignored-choices.json")) !== null,
+        5_000,
+        "ignored-choices.json",
+      );
+      expect(parseIgnoredChoices(await read(".project-docs/ignored-choices.json"))).toContainEqual({
+        path: `${folderName}/`,
+        choice,
+      });
+      await rm(onDisk(".project-docs/ignored-choices.json"));
+    });
+  }
 
   it("lists the project in its settings tab, whose toggles take effect at once (TASK-16)", async function () {
     // Obsidian's settings window isn't in the public API's types. From 1.13 it can open as a

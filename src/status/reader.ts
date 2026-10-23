@@ -70,12 +70,25 @@ export class StatusReader extends Events {
     );
   }
 
-  /** The items about one vault file. */
+  /**
+   * The project's items, or null while its status hasn't been read or can't be, so a caller can
+   * tell "nothing to report" from "nothing known".
+   */
+  itemsOf(project: Project): readonly StatusItem[] | null {
+    return this.read.get(project.id)?.status?.items ?? null;
+  }
+
+  /**
+   * The items about one vault file, including one about a folder it's in: a folder's path ends
+   * in `/`, as for a folder that became ignored by git.
+   */
   itemsFor(path: string): ProjectStatusItem[] {
     const place = this.projects.projectFor(path);
     if (!place) return [];
     return this.items().filter(
-      (item) => item.project.id === place.project.id && item.path === place.key,
+      (item) =>
+        item.project.id === place.project.id &&
+        (item.path === place.key || (item.path.endsWith("/") && place.key.startsWith(item.path))),
     );
   }
 

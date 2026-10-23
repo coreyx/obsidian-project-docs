@@ -66,6 +66,7 @@ A note that the sync has a problem with shows a banner at the top, with the reas
 - a change held back from the repo, because it links to a private note or contains a real value from PRIVATE.md;
 - a conflict waiting in VS Code;
 - a note that was private and lost its marker some other way, such as by hand or by an agent rewriting it. It waits for your say-so: **Sync to repo…** asks, as above.
+- a note that stopped syncing because git now ignores its folder, or the note itself. Both copies stay as they are. **Keep syncing it** adds the folder to the repo's `syncIgnored` setting, and edits made on either side in the meantime then sync. **Stop syncing it** leaves it out of the sync and clears the banner. In `node_modules`, which never syncs, only **Stop syncing it** is offered. Either way, the sync carries out your choice on its next pass.
 
 The status comes from `.project-docs/status.json`, which the sync writes after every pass. It never contains a real value.
 
@@ -102,7 +103,7 @@ The decoded view's toggle, and the status bar item that says when real values ar
   - each project folder's `.project-docs/status.json`.
 - **Writes:**
   - the `project-docs` property of a note, when it arrives in a private folder or when you choose a rule;
-  - `.project-docs/private-files.json` and `.project-docs/confirmations.json` in the project folder.
+  - `.project-docs/private-files.json`, `.project-docs/confirmations.json` and `.project-docs/ignored-choices.json` in the project folder.
   - its display settings, in Obsidian's usual place for a plugin's settings (`data.json` in the plugin's folder).
 
 Obsidian hides the `.project-docs` folder, and syncing never copies it to the repo.

@@ -14,4 +14,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - **Sync rules with the mouse:** from the file menu, the status bar or the note's header. Making a private note syncable asks first, and records the answer so VS Code doesn't ask again.
   - **Sync status:** in the status bar, with a banner on any note the sync has a problem with.
   - **Decoded view:** a note shown with its real values from the repo's PRIVATE.md, read-only, in the same tab, including footnotes, properties and embedded notes. Nothing partly decoded is ever shown.
+  - **Notes that git now ignores:** a banner on each note that stopped syncing because git ignores it, with **Keep syncing it** and **Stop syncing it**, recorded in `.project-docs/ignored-choices.json` for the sync to carry out. Needs `@specdevship/project-docs-core` 0.2.0.
   - **Settings tab:** the vault's linked projects and their sync settings, read-only, and switches for the sync rule and status displays and the banners. Its settings appear in Obsidian's settings search.

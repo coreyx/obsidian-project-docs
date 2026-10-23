@@ -185,7 +185,7 @@ None at this time. Details that don't change the plan are settled in the task th
 ### Choices for notes that became ignored (added in a revision, 2026-10-23)
 
 #### [NEW] `src/status/ignored-choices.ts`; [MODIFY] `src/status/banner.ts`, `src/main.ts`, `package.json`, `README.md`
-- [ ] **TASK-17:** **Keep syncing it** and **Stop syncing it** on the banner of a note the engine reports as `now-ignored` (main spec REQ-3.0.8, AC 3.10, design decision 20).
+- [x] **TASK-17:** **Keep syncing it** and **Stop syncing it** on the banner of a note the engine reports as `now-ignored` (main spec REQ-3.0.8, AC 3.10, design decision 20).
   - **Depends on** the core release that adds `ignored-choices.json` to its `/status` entry point (main spec TASK-37). The core is pinned, so this moves the pin to that release.
   - **The buttons** record the choice for the notice's folder or file in `.project-docs/ignored-choices.json`, which the engine carries out on its next pass. Neither asks first: keeping syncing a note that was syncing before, or stopping, sends nothing new to the repo.
   - **Pruning:** an entry is removed once its notice has left `status.json`, as `Confirmations` does.

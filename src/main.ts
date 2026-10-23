@@ -15,6 +15,7 @@ import { RuleIndicator } from "./rules/indicator.js";
 import { RuleChanger } from "./rules/menu.js";
 import { ProjectDocsSettingTab, readSettings, type DisplaySettings } from "./settings.js";
 import { StatusDisplay } from "./status/banner.js";
+import { IgnoredChoices } from "./status/ignored-choices.js";
 import { STATUS_POLL_MS, StatusReader, type ProjectStatusItem } from "./status/reader.js";
 
 /** The plugin Obsidian loads from main.js. */
@@ -22,6 +23,7 @@ export default class ProjectDocsPlugin extends Plugin {
   projects!: ProjectIndex;
   displaySettings!: DisplaySettings;
   private confirmations!: Confirmations;
+  private ignoredChoices!: IgnoredChoices;
   private marker!: PrivateMarker;
   private privateFiles!: PrivateFilesList;
   private rules!: RuleChanger;
@@ -35,6 +37,7 @@ export default class ProjectDocsPlugin extends Plugin {
     this.displaySettings = readSettings(await this.loadData());
     this.projects = new ProjectIndex(this.app);
     this.confirmations = new Confirmations(this.app);
+    this.ignoredChoices = new IgnoredChoices(this.app);
     this.marker = new PrivateMarker(this.app, this.projects);
     this.privateFiles = new PrivateFilesList(this.app, this.projects, (project) => {
       new Notice(
@@ -51,6 +54,7 @@ export default class ProjectDocsPlugin extends Plugin {
       this.addStatusBarItem(),
       (file, item) => this.confirmSyncable(file, item),
       display,
+      (item, choice) => this.chooseIgnored(item, choice),
     );
     this.decoded = new DecodedViews(this.app, this.projects, this.addStatusBarItem());
 
@@ -113,6 +117,7 @@ export default class ProjectDocsPlugin extends Plugin {
       this.status.on("changed", () => {
         this.statusDisplay.refresh();
         void this.pruneConfirmations();
+        void this.pruneIgnoredChoices();
       }),
     );
     for (const name of ["active-leaf-change", "file-open", "layout-change"] as const) {
@@ -153,6 +158,27 @@ export default class ProjectDocsPlugin extends Plugin {
   /** Tidies every project's confirmations once the engine has reported again. */
   private async pruneConfirmations(): Promise<void> {
     for (const project of this.projects.projects) await this.confirmations.prune(project);
+  }
+
+  /** Tidies every project's choices for ignored notes once the engine has reported again. */
+  private async pruneIgnoredChoices(): Promise<void> {
+    for (const project of this.projects.projects) {
+      await this.ignoredChoices.prune(project, this.status.itemsOf(project));
+    }
+  }
+
+  /**
+   * The banner's "Keep syncing it" or "Stop syncing it" on notes that became ignored by git:
+   * records the choice for the engine's next pass. Neither asks first, since keeping sends nothing
+   * that wasn't syncing before, and stopping changes no file.
+   */
+  private async chooseIgnored(item: ProjectStatusItem, choice: "sync" | "stop"): Promise<void> {
+    await this.ignoredChoices.choose(item.project, item.path, choice);
+    new Notice(
+      choice === "sync"
+        ? `${item.path} keeps syncing from the next sync pass.`
+        : `${item.path} stops syncing on the next sync pass. Both copies stay as they are.`,
+    );
   }
 
   /** The banner's "Sync to repo…" on a note that was private: asks, then records the answer. */
