@@ -78,7 +78,7 @@ None at this time. Details that don't change the plan are settled in the task th
 ### Finding projects and their settings
 
 #### [NEW] `src/projects.ts`
-- [ ] **TASK-4:** `ProjectIndex`, which finds every linked project in the vault and keeps up to date as notes change.
+- [x] **TASK-4:** `ProjectIndex`, which finds every linked project in the vault and keeps up to date as notes change.
   - A project is a folder whose folder note has `project-docs-id` and `project-docs-repo` in its frontmatter, read from `app.metadataCache`.
   - For each project, it reads `.project-docs.json` from the repo with the core's `readLink()`, to get `privateSubfolder` and `syncAttachments`. While the repo can't be reached (a disconnected drive, WSL not running), it assumes the safe defaults: private folder `private`, and attachments treated as possibly private.
   - `projectFor(file)` returns a file's project and its key in the project folder, or null.

@@ -9,6 +9,20 @@ export class Component {
   unload(): void {}
 }
 
+/** Obsidian's event emitter. */
+export class Events {
+  private readonly handlers = new Map<string, ((...data: unknown[]) => unknown)[]>();
+
+  on(name: string, callback: (...data: unknown[]) => unknown): { name: string } {
+    this.handlers.set(name, [...(this.handlers.get(name) ?? []), callback]);
+    return { name };
+  }
+
+  trigger(name: string, ...data: unknown[]): void {
+    for (const callback of this.handlers.get(name) ?? []) callback(...data);
+  }
+}
+
 /** Obsidian's base class for plugins. */
 export class Plugin extends Component {
   onload(): void | Promise<void> {}

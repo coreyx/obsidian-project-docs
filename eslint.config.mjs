@@ -23,6 +23,8 @@ export default defineConfig([
       "no-undef": "off",
       // The DOM helpers' stand-ins are built from the plain DOM they stand in for.
       "obsidianmd/prefer-create-el": "off",
+      // Tests build plain objects shaped like files.
+      "obsidianmd/no-tfile-tfolder-cast": "off",
     },
   },
 ]);
