@@ -418,6 +418,17 @@ describe("the plugin in a linked project", function () {
       await open(key);
       const eye = $('.workspace-leaf.mod-active .view-action[aria-label="Show decoded"]');
       await eye.waitForDisplayed({ timeout: 8_000 });
+      // A notice from an earlier test, such as the one after "Keep syncing it", sits over the
+      // header's right end for a few seconds. Clicking a notice dismisses it, as it would for a
+      // person. Its text is logged, in case it isn't one a test expects.
+      const dismissed = await browser.execute(() =>
+        [...document.querySelectorAll<HTMLElement>(".notice")].map((notice) => {
+          notice.click();
+          return notice.textContent ?? "";
+        }),
+      );
+      if (dismissed.length > 0) console.log(`Dismissed notices: ${dismissed.join(" | ")}`);
+      await $(".notice").waitForDisplayed({ reverse: true, timeout: 5_000 });
       await eye.click();
       const view = $(".workspace-leaf.mod-active .project-docs-decoded-view");
       await view.waitForDisplayed({ timeout: 8_000 });
