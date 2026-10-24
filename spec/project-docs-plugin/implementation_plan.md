@@ -195,7 +195,7 @@ None at this time. Details that don't change the plan are settled in the task th
 ### The mirrored layout (added in a revision, 2026-10-24)
 
 #### [MODIFY] `src/projects.ts`, `src/privacy/*`, `src/rules/*`, `src/settings.ts`, `package.json`, `README.md`
-- [ ] **TASK-18:** Follow the vault folder's mirrored layout (main spec REQ-22, design decision 21).
+- [x] **TASK-18:** Follow the vault folder's mirrored layout (main spec REQ-22, design decision 21).
   - **Depends on** the core release with main spec TASK-39 and TASK-40, and moves the pin to it.
   - **Scope:** read `rootFiles` from `.project-docs.json` with the docs folder, and treat a note outside the vault's copy of the docs folder that isn't a listed root file as vault only: no private marking, and the rule indicator and file menu show it as vault only, with no rule to change.
   - **The private folder** is `<docs folder>/<privateSubfolder>/` in the vault, for `PrivateMarker` and `PrivateFilesList`.

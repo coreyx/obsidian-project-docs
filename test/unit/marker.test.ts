@@ -3,7 +3,8 @@ import { FrontmatterError } from "@specdevship/project-docs-core/rules";
 import { PrivateMarker } from "../../src/privacy/marker.js";
 import { MemoryVault, PROJECT, appWith, fixedProjects } from "./helpers.js";
 
-const P = PROJECT.folder;
+/** The vault's copy of the docs folder: the project folder mirrors the repo. */
+const P = `${PROJECT.folder}/docs`;
 let vault: MemoryVault;
 let marker: PrivateMarker;
 
@@ -45,6 +46,7 @@ describe("PrivateMarker.mark (REQ-10.0.3)", () => {
     ["outside the private folder", `${P}/notes.md`],
     ["in a folder that only starts like it", `${P}/privateer/a.md`],
     ["outside every project", "Elsewhere/private/a.md"],
+    ["in a private folder outside the docs folder", `${PROJECT.folder}/private/a.md`],
     ["not Markdown", `${P}/private/shot.png`],
     ["the link note", PROJECT.linkNotePath],
   ])("leaves a file %s alone", async (_name, path) => {
@@ -53,8 +55,19 @@ describe("PrivateMarker.mark (REQ-10.0.3)", () => {
     expect(vault.writes).toEqual([]);
   });
 
+  it("marks nothing while the repo, and so the private folder, can't be read", async () => {
+    const unknown = { ...PROJECT, reachable: false, docsFolder: null, privateFolder: null };
+    const blind = new PrivateMarker(appWith(vault), fixedProjects([unknown]));
+    vault.texts.set(`${P}/private/a.md`, "a\n");
+    expect(await blind.mark(vault.file(`${P}/private/a.md`))).toBe("not-private");
+  });
+
   it("follows the project's own private folder name", async () => {
-    const custom = { ...PROJECT, privateSubfolder: "secret/notes" };
+    const custom = {
+      ...PROJECT,
+      privateSubfolder: "secret/notes",
+      privateFolder: "docs/secret/notes",
+    };
     marker = new PrivateMarker(appWith(vault), fixedProjects([custom]));
     vault.texts.set(`${P}/secret/notes/a.md`, "a\n");
     vault.texts.set(`${P}/private/b.md`, "b\n");

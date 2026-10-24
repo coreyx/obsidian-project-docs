@@ -11,8 +11,10 @@ export const PROJECT: Project = {
   linkNotePath: "Projects/api/api.md",
   repoPath: "/src/api",
   privateSubfolder: "private",
+  privateFolder: "docs/private",
   syncAttachments: true,
   docsFolder: "docs",
+  rootFiles: ["README.md", "CHANGELOG.md", "RELEASE_NOTES.md"],
   reachable: true,
 };
 

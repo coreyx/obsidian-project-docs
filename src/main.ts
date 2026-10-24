@@ -184,10 +184,7 @@ export default class ProjectDocsPlugin extends Plugin {
   /** The banner's "Sync to repo…" on a note that was private: asks, then records the answer. */
   private async confirmSyncable(file: TFile, item: ProjectStatusItem): Promise<void> {
     const { project } = item;
-    const repoPath =
-      project.docsFolder === null
-        ? null
-        : [project.docsFolder, item.path].filter(Boolean).join("/");
+    const repoPath = project.reachable ? item.path : null;
     if (!(await confirmUnprivate(this.app, file.name, repoPath))) return;
     await this.confirmations.confirm(project, item.path, await this.app.vault.read(file));
     new Notice(`${file.name} syncs to the repo on the next sync pass.`);

@@ -57,9 +57,10 @@ export class Confirmations {
           path.join(this.folderPath(project), ...entry.path.split("/")),
         );
         if (note === null || markdownHash(note) !== entry.sha256) continue;
-        if (project.docsFolder !== null) {
+        if (project.reachable) {
+          // The project folder mirrors the repo, so the key is also the repo copy's path.
           const repoCopy = await this.store.read(
-            path.join(project.repoPath, ...project.docsFolder.split("/"), ...entry.path.split("/")),
+            path.join(project.repoPath, ...entry.path.split("/")),
           );
           if (repoCopy !== null && markdownHash(repoCopy) === entry.sha256) continue;
         }

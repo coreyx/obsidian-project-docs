@@ -8,7 +8,8 @@ import { RuleChanger } from "../../src/rules/menu.js";
 import { Menu, Modal, Notice, Setting } from "../mocks/obsidian.js";
 import { MemoryVault, PROJECT, appWith, fixedProjects } from "./helpers.js";
 
-const P = PROJECT.folder;
+/** The vault's copy of the docs folder: the project folder mirrors the repo. */
+const P = `${PROJECT.folder}/docs`;
 let vault: MemoryVault;
 let confirmed: { project: Project; key: string; text: string }[];
 let asked: { name: string; repoPath: string | null }[];
@@ -77,7 +78,7 @@ describe("RuleChanger.setRule (REQ-9.0.2, 9.2)", () => {
     vault.texts.set(`${P}/plan.md`, "---\nproject-docs: private\n---\nplan\n");
     await rules.setRule(vault.file(`${P}/plan.md`), "repo-only");
     expect(confirmed).toEqual([
-      { project: PROJECT, key: "plan.md", text: "---\nproject-docs: repo-only\n---\nplan\n" },
+      { project: PROJECT, key: "docs/plan.md", text: "---\nproject-docs: repo-only\n---\nplan\n" },
     ]);
   });
 
@@ -91,7 +92,7 @@ describe("RuleChanger.setRule (REQ-9.0.2, 9.2)", () => {
   });
 
   it("names the repo path as unknown while the repo can't be read", async () => {
-    rules = changer({ ...PROJECT, docsFolder: null });
+    rules = changer({ ...PROJECT, docsFolder: null, privateFolder: null, reachable: false });
     vault.texts.set(`${P}/plan.md`, "---\nproject-docs: private\n---\n");
     await rules.setRule(vault.file(`${P}/plan.md`), "sync");
     expect(asked[0]?.repoPath).toBeNull();
@@ -161,6 +162,20 @@ describe("RuleChanger.addItems (REQ-9.1)", () => {
       "Sync rule: Private, vault only",
     ]);
     expect(items("Elsewhere/a.md")).toEqual([]);
+  });
+
+  it("shows a note outside what the project syncs as vault only, with no rule (TASK-18)", async () => {
+    const outside = `${PROJECT.folder}/scratch.md`;
+    expect(items(outside).map((i) => [i.title, i.disabled, i.handler])).toEqual([
+      ["Vault only: outside the folders this project syncs", true, undefined],
+    ]);
+    vault.texts.set(outside, "scratch\n");
+    expect(await rules.setRule(vault.file(outside), "repo-only")).toBe("unavailable");
+    expect(vault.texts.get(outside)).toBe("scratch\n");
+  });
+
+  it("offers the rules on a root file the project lists (TASK-18)", () => {
+    expect(items(`${PROJECT.folder}/README.md`)).toHaveLength(4);
   });
 });
 

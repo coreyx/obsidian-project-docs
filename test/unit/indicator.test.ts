@@ -7,7 +7,8 @@ import { DEFAULT_SETTINGS, type DisplaySettings } from "../../src/settings.js";
 import { MarkdownView, Menu, TFile } from "../mocks/obsidian.js";
 import { MemoryVault, PROJECT, fixedProjects } from "./helpers.js";
 
-const P = PROJECT.folder;
+/** The vault's copy of the docs folder: the project folder mirrors the repo. */
+const P = `${PROJECT.folder}/docs`;
 let frontmatter: Record<string, Record<string, unknown>>;
 let active: TFile | null;
 let views: MarkdownView[];
@@ -46,6 +47,19 @@ afterEach(() => {
 });
 
 describe("the status bar item (REQ-9.0.1, 9.0.3)", () => {
+  it("shows a note outside what the project syncs as vault only (TASK-18)", () => {
+    active = new TFile(`${PROJECT.folder}/scratch.md`);
+    indicator.refresh();
+    expect(status.textContent).toBe("Vault only");
+    expect(status.querySelector<HTMLElement>(".project-docs-rule-icon")?.dataset.icon).toBe(
+      "unlink",
+    );
+    status.click();
+    expect(menus[0]?.items.map((i) => i.title)).toEqual([
+      "Vault only: outside the folders this project syncs",
+    ]);
+  });
+
   it("shows the active note's rule, and opens the choices when clicked", () => {
     active = new TFile(`${P}/guide.md`);
     frontmatter[`${P}/guide.md`] = { "project-docs": "repo-to-vault" };

@@ -86,9 +86,15 @@ export function projectFacts(project: Project): string[] {
   return [
     `Repo: ${project.repoPath}`,
     project.reachable
-      ? `Docs folder in the repo: ${project.docsFolder ?? ""}`
+      ? `Docs folder in the repo: ${project.docsFolder || "the repo root"}`
       : "The repo can't be read right now, so the plugin uses the settings that protect the most.",
-    `Private folder: ${project.privateSubfolder}`,
+    // With the repo root linked, every root file is already in the docs folder.
+    ...(project.docsFolder
+      ? [`Root files: ${project.rootFiles.length > 0 ? project.rootFiles.join(", ") : "none"}`]
+      : []),
+    project.reachable
+      ? `Private folder: ${project.privateFolder}`
+      : `Private folder: ${project.privateSubfolder}, inside the docs folder`,
     `Attachment sync: ${project.syncAttachments ? "on" : "off"}`,
   ];
 }

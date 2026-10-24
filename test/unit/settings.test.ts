@@ -45,17 +45,37 @@ describe("projectFacts", () => {
     expect(projectFacts(PROJECT)).toEqual([
       "Repo: /src/api",
       "Docs folder in the repo: docs",
+      "Root files: README.md, CHANGELOG.md, RELEASE_NOTES.md",
+      "Private folder: docs/private",
+      "Attachment sync: on",
+    ]);
+  });
+
+  it("says when no root files sync, and leaves them out for a repo-root link (TASK-18)", () => {
+    expect(projectFacts({ ...PROJECT, rootFiles: [] })[2]).toBe("Root files: none");
+    expect(projectFacts({ ...PROJECT, docsFolder: "", privateFolder: "private" })).toEqual([
+      "Repo: /src/api",
+      "Docs folder in the repo: the repo root",
       "Private folder: private",
       "Attachment sync: on",
     ]);
   });
 
   it("says when the repo can't be read", () => {
-    const facts = projectFacts({ ...PROJECT, reachable: false, syncAttachments: false });
-    expect(facts[1]).toBe(
+    const facts = projectFacts({
+      ...PROJECT,
+      reachable: false,
+      docsFolder: null,
+      privateFolder: null,
+      rootFiles: [],
+      syncAttachments: false,
+    });
+    expect(facts).toEqual([
+      "Repo: /src/api",
       "The repo can't be read right now, so the plugin uses the settings that protect the most.",
-    );
-    expect(facts[3]).toBe("Attachment sync: off");
+      "Private folder: private, inside the docs folder",
+      "Attachment sync: off",
+    ]);
   });
 });
 

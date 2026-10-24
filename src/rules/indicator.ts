@@ -5,7 +5,8 @@
  */
 import { MarkdownView, Menu, setIcon, setTooltip, type App, type TFile } from "obsidian";
 import { DEFAULT_SETTINGS, type DisplaySettings } from "../settings.js";
-import { RULE_ICONS, RULE_LABELS, type RuleChanger } from "./menu.js";
+import { RULE_ICONS, RULE_LABELS, VAULT_ONLY, type RuleChanger } from "./menu.js";
+import type { ProjectFile } from "../projects.js";
 
 /** How a note's rule is shown: an icon and a label. */
 export interface RuleDisplay {
@@ -18,6 +19,11 @@ export function displayOf(rule: ReturnType<RuleChanger["cachedRuleOf"]>): RuleDi
   return rule === "invalid"
     ? { icon: "alert-triangle", label: "Unknown sync rule" }
     : { icon: RULE_ICONS[rule], label: RULE_LABELS[rule] };
+}
+
+/** How a project note is shown: its rule, or vault only when the project doesn't sync it. */
+function shownFor(rules: RuleChanger, file: TFile, place: ProjectFile): RuleDisplay {
+  return rules.syncs(place) ? displayOf(rules.cachedRuleOf(file)) : VAULT_ONLY;
 }
 
 /** Keeps the status bar item and the header actions in step with each note's rule. */
@@ -69,10 +75,16 @@ export class RuleIndicator {
     this.statusEl.empty();
     this.statusEl.toggleClass("project-docs-hidden", !place);
     if (!file || !place) return;
-    const { icon, label } = displayOf(this.rules.cachedRuleOf(file));
+    const { icon, label } = shownFor(this.rules, file, place);
     setIcon(this.statusEl.createSpan({ cls: "project-docs-rule-icon" }), icon);
     this.statusEl.createSpan({ text: label });
-    setTooltip(this.statusEl, "Project Docs sync rule. Click to change it.", { placement: "top" });
+    setTooltip(
+      this.statusEl,
+      this.rules.syncs(place)
+        ? "Project Docs sync rule. Click to change it."
+        : "Project Docs doesn't sync this note: it's outside the folders the project syncs.",
+      { placement: "top" },
+    );
   }
 
   private refreshAction(view: MarkdownView): void {
@@ -84,7 +96,7 @@ export class RuleIndicator {
       this.actions.delete(view);
       return;
     }
-    const { icon, label } = displayOf(this.rules.cachedRuleOf(file));
+    const { icon, label } = shownFor(this.rules, file, place);
     const title = `Sync rule: ${label}`;
     if (existing && existing.path === file.path) {
       setIcon(existing.el, icon);

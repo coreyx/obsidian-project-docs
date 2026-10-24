@@ -3,9 +3,11 @@ import type { App, CachedMetadata, TFile } from "obsidian";
 import type { CommittedLink, LinkState } from "@specdevship/project-docs-core/records";
 import {
   ProjectIndex,
+  inPrivateFolder,
   linkNoteOf,
   projectFileOf,
   projectOf,
+  syncsKey,
   type Project,
 } from "../../src/projects.js";
 
@@ -26,6 +28,7 @@ function committed(overrides: Partial<CommittedLink> = {}): CommittedLink {
       allowLinksOutsideProjectFolder: false,
       advancedUriDeepLinks: false,
       syncIgnored: [],
+      rootFiles: ["README.md", "CHANGELOG.md"],
     },
     ...overrides,
   };
@@ -63,10 +66,23 @@ describe("projectOf", () => {
       linkNotePath: "Projects/api/api.md",
       repoPath: "C:\\src\\api",
       privateSubfolder: "secret",
+      privateFolder: "docs/secret",
       syncAttachments: false,
       docsFolder: "docs",
+      rootFiles: ["README.md", "CHANGELOG.md"],
       reachable: true,
     });
+  });
+
+  it("puts the private folder inside the docs folder, whatever its separators (TASK-18)", () => {
+    const link = (docsFolder: string): LinkState => ({
+      state: "linked",
+      committed: committed({ docsFolder }),
+      local: {} as never,
+    });
+    expect(projectOf(note, link("docs\\guide\\")).privateFolder).toBe("docs/guide/secret");
+    expect(projectOf(note, link("/docs/guide/")).docsFolder).toBe("docs/guide");
+    expect(projectOf(note, link("")).privateFolder).toBe("secret");
   });
 
   it("uses a committed record that has no local one yet (another machine)", () => {
@@ -89,8 +105,10 @@ describe("projectOf", () => {
     expect(projectOf(note, link)).toMatchObject({
       folder: "Projects/api",
       privateSubfolder: "private",
+      privateFolder: null,
       syncAttachments: true,
       docsFolder: null,
+      rootFiles: [],
       reachable: false,
     });
   });
@@ -197,5 +215,39 @@ describe("ProjectIndex", () => {
       ),
     ).toBe(true);
     expect(idx.affects({ path: "p/a.md" } as TFile, cache())).toBe(false);
+  });
+});
+
+describe("the mirrored layout (REQ-22, TASK-18)", () => {
+  const linked = projectOf(note, { state: "linked", committed: committed(), local: {} as never });
+
+  it("syncs the docs folder and the listed root files, and nothing else", () => {
+    expect(syncsKey(linked, "docs/guide.md")).toBe(true);
+    expect(syncsKey(linked, "docs/deep/er/note.md")).toBe(true);
+    expect(syncsKey(linked, "README.md")).toBe(true);
+    expect(syncsKey(linked, "CHANGELOG.md")).toBe(true);
+    expect(syncsKey(linked, "RELEASE_NOTES.md")).toBe(false);
+    expect(syncsKey(linked, "scratch.md")).toBe(false);
+    expect(syncsKey(linked, "src/README.md")).toBe(false);
+    expect(syncsKey(linked, "docsy/a.md")).toBe(false);
+  });
+
+  it("syncs everything for a repo-root link", () => {
+    const root = { ...linked, docsFolder: "" };
+    expect(syncsKey(root, "scratch.md")).toBe(true);
+    expect(syncsKey(root, "src/notes/a.md")).toBe(true);
+  });
+
+  it("treats every note as one that may sync while the repo can't be read", () => {
+    expect(syncsKey(projectOf(note, null), "scratch.md")).toBe(true);
+  });
+
+  it("finds the private folder inside the docs folder, and none while the repo can't be read", () => {
+    expect(inPrivateFolder(linked, "docs/secret/a.md")).toBe(true);
+    expect(inPrivateFolder(linked, "docs/secret")).toBe(true);
+    expect(inPrivateFolder(linked, "secret/a.md")).toBe(false);
+    expect(inPrivateFolder(linked, "docs/secretive/a.md")).toBe(false);
+    expect(inPrivateFolder(projectOf(note, null), "docs/private/a.md")).toBe(false);
+    expect(inPrivateFolder(projectOf(note, null), "private/a.md")).toBe(false);
   });
 });

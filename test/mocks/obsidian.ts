@@ -178,6 +178,7 @@ export class MenuItem {
   icon: string | null = null;
   checked: boolean | null = null;
   section = "";
+  disabled = false;
   handler: (() => unknown) | undefined;
 
   setTitle(title: string): this {
@@ -197,6 +198,11 @@ export class MenuItem {
 
   setSection(section: string): this {
     this.section = section;
+    return this;
+  }
+
+  setDisabled(disabled: boolean): this {
+    this.disabled = disabled;
     return this;
   }
 

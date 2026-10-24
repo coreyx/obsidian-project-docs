@@ -5,7 +5,6 @@
  * a file to the repo whose path or hash is listed (REQ-11.0.4), wherever it's moved or copied.
  */
 import { TFile, type App } from "obsidian";
-import { inPrivateSubfolder } from "@specdevship/project-docs-core/guards";
 import {
   PRIVATE_FILES_FORMAT,
   privateFilesPath,
@@ -13,7 +12,7 @@ import {
   sha256,
 } from "@specdevship/project-docs-core/status";
 import { fileStore, projectFolderPath, type MetadataStore } from "../metadata.js";
-import type { Project, ProjectIndex } from "../projects.js";
+import { inPrivateFolder, type Project, type ProjectIndex } from "../projects.js";
 
 /** One project's list as the plugin keeps it: key to hash, or why it can't be kept. */
 type ListState = { readonly records: Map<string, string>; saved: string } | "unreadable";
@@ -116,7 +115,7 @@ export class PrivateFilesList {
     if (file.extension === "md") return;
     const place = this.projects.projectFor(file.path);
     if (!place?.project.syncAttachments) return;
-    if (!inPrivateSubfolder(place.key, place.project.privateSubfolder)) return;
+    if (!inPrivateFolder(place.project, place.key)) return;
     if ((await this.recorded(place.project, place.key)) !== undefined) return;
     const hash = sha256(new Uint8Array(await this.app.vault.readBinary(file)));
     await this.record(place.project, place.key, hash);

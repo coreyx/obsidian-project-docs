@@ -61,7 +61,7 @@ describe("Confirmations.prune", () => {
     expect(await confirmations.list(project)).toHaveLength(1);
 
     // The engine synced it; the repo copy may use other line endings.
-    await write(path.join(dir, "repo", "docs", "plan.md"), "plan\r\n");
+    await write(path.join(dir, "repo", "plan.md"), "plan\r\n");
     await confirmations.prune(project);
     expect(await confirmations.list(project)).toEqual([]);
   });

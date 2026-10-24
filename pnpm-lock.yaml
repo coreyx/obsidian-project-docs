@@ -167,8 +167,8 @@ importers:
   .:
     dependencies:
       '@specdevship/project-docs-core':
-        specifier: 0.2.0
-        version: 0.2.0(supports-color@8.1.1)
+        specifier: 0.3.0
+        version: 0.3.0(supports-color@8.1.1)
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.5
@@ -832,8 +832,8 @@ packages:
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
     engines: {node: '>=18'}
 
-  '@specdevship/project-docs-core@0.2.0':
-    resolution: {integrity: sha512-yTVo0L2Zc8lOHI0XAkk1JzBeG3LwhqIhvYC9wPTTeFJeyv1PrPWewsN0TpftNcMc9ahYba+IjsgeAYlN9HSOIg==}
+  '@specdevship/project-docs-core@0.3.0':
+    resolution: {integrity: sha512-HLftjxJMw3ySVNG54M6amN9mOZp/z3ZmTDplJmuzE9l/mc5xI8EnjnQG2OK+idZi+6Loyo/OeBbVKpScirQz4A==}
     engines: {node: '>=22'}
 
   '@supercharge/promise-pool@3.3.0':
@@ -4347,7 +4347,7 @@ snapshots:
 
   '@sindresorhus/merge-streams@4.0.0': {}
 
-  '@specdevship/project-docs-core@0.2.0(supports-color@8.1.1)':
+  '@specdevship/project-docs-core@0.3.0(supports-color@8.1.1)':
     dependencies:
       ignore: 7.0.12
       mdast-util-from-markdown: 2.1.0(supports-color@8.1.1)

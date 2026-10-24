@@ -11,7 +11,8 @@ import { fileStore, projectFolderPath } from "../../src/metadata.js";
 import { FileSystemAdapter } from "../mocks/obsidian.js";
 import { MemoryVault, PROJECT, appWith, fixedProjects } from "./helpers.js";
 
-const P = PROJECT.folder;
+/** The vault's copy of the docs folder: the project folder mirrors the repo. */
+const P = `${PROJECT.folder}/docs`;
 const PIXELS = new Uint8Array([1, 2, 3]);
 let dir: string;
 let vault: MemoryVault;
@@ -44,7 +45,9 @@ describe("PrivateFilesList (REQ-11.0.3)", () => {
   it("records an attachment created in the private folder, in a list the engine reads", async () => {
     vault.binaries.set(`${P}/private/shot.png`, PIXELS);
     await list().onCreate(vault.file(`${P}/private/shot.png`));
-    expect((await listed()).files).toEqual([{ path: "private/shot.png", sha256: sha256(PIXELS) }]);
+    expect((await listed()).files).toEqual([
+      { path: "docs/private/shot.png", sha256: sha256(PIXELS) },
+    ]);
     const parsed = parsePrivateFilesList(await readFile(listFile(), "utf8"));
     expect(parsed !== "invalid" && parsed.hashes.has(sha256(PIXELS))).toBe(true);
   });
@@ -65,7 +68,9 @@ describe("PrivateFilesList (REQ-11.0.3)", () => {
     await files.onCreate(vault.file(`${P}/private/shot.png`));
     vault.binaries.set(`${P}/img/renamed.png`, PIXELS);
     await files.onRename(vault.file(`${P}/img/renamed.png`), `${P}/private/shot.png`);
-    expect((await listed()).files).toEqual([{ path: "img/renamed.png", sha256: sha256(PIXELS) }]);
+    expect((await listed()).files).toEqual([
+      { path: "docs/img/renamed.png", sha256: sha256(PIXELS) },
+    ]);
   });
 
   it("records a file moved into the private folder, and one moved in from another project", async () => {
@@ -73,7 +78,7 @@ describe("PrivateFilesList (REQ-11.0.3)", () => {
     const files = list([PROJECT, other]);
     vault.binaries.set(`${P}/private/in.png`, PIXELS);
     await files.onRename(vault.file(`${P}/private/in.png`), `${P}/in.png`);
-    expect((await listed()).files.map((f) => f.path)).toEqual(["private/in.png"]);
+    expect((await listed()).files.map((f) => f.path)).toEqual(["docs/private/in.png"]);
 
     // A recorded file moved to another project keeps its record there too.
     vault.binaries.set("Other/moved.png", PIXELS);
@@ -88,7 +93,7 @@ describe("PrivateFilesList (REQ-11.0.3)", () => {
     const edited = new Uint8Array([9, 9]);
     vault.binaries.set(`${P}/private/shot.png`, edited);
     await files.onModify(vault.file(`${P}/private/shot.png`));
-    expect(await files.recorded(PROJECT, "private/shot.png")).toBe(sha256(edited));
+    expect(await files.recorded(PROJECT, "docs/private/shot.png")).toBe(sha256(edited));
     await files.onModify(vault.file(`${P}/other.png`));
     await files.onModify(vault.file(`${P}/private/plan.md`));
     expect((await listed()).files).toHaveLength(1);
@@ -98,14 +103,14 @@ describe("PrivateFilesList (REQ-11.0.3)", () => {
     await mkdir(path.dirname(listFile()), { recursive: true });
     await writeFile(
       listFile(),
-      JSON.stringify({ format: 1, files: [{ path: "private/gone.png", sha256: "aa" }] }),
+      JSON.stringify({ format: 1, files: [{ path: "docs/private/gone.png", sha256: "aa" }] }),
     );
     vault.binaries.set(`${P}/private/new.png`, PIXELS);
     vault.binaries.set(`${P}/public.png`, PIXELS);
     await list().sweep();
     expect((await listed()).files.map((f) => f.path)).toEqual([
-      "private/gone.png",
-      "private/new.png",
+      "docs/private/gone.png",
+      "docs/private/new.png",
     ]);
   });
 

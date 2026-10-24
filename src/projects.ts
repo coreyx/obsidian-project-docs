@@ -3,8 +3,13 @@
  * note, the link note, carries `project-docs-id` and `project-docs-repo` in its frontmatter
  * (design.md, Data model). Each project's settings come from the repo's `.project-docs.json`, read
  * through the path in the link note, since the plugin never copies anything from the repo.
+ *
+ * The project folder mirrors the repo (design decision 21, TASK-18): a note's key within it is its
+ * path in the repo, and only the docs folder and the root files the link lists sync.
  */
 import { Events, type App, type CachedMetadata, type TFile } from "obsidian";
+import { createScope, privateFolderKey } from "@specdevship/project-docs-core";
+import { inPrivateSubfolder } from "@specdevship/project-docs-core/guards";
 import { readLink, type LinkState } from "@specdevship/project-docs-core/records";
 
 /** One linked project, as the plugin sees it. */
@@ -16,11 +21,18 @@ export interface Project {
   readonly linkNotePath: string;
   /** The repo, as this machine opens it (a `\\wsl.localhost\...` path for a WSL repo). */
   readonly repoPath: string;
-  /** The private subfolder's key within the project folder. */
+  /** The private subfolder setting, relative to the docs folder. */
   readonly privateSubfolder: string;
+  /**
+   * The private folder's key within the project folder, or null while the repo can't be read:
+   * the private subfolder is inside the docs folder, which only the repo's record names.
+   */
+  readonly privateFolder: string | null;
   readonly syncAttachments: boolean;
-  /** The repo's docs folder, repo-relative, or null when the repo can't be read. */
+  /** The repo's docs folder, repo-relative (`""` for the repo root), or null when the repo can't be read. */
   readonly docsFolder: string | null;
+  /** The Markdown files at the top of the repo that sync beside the docs folder. */
+  readonly rootFiles: readonly string[];
   /** False while the repo's link record can't be read; the settings are then the safe defaults. */
   readonly reachable: boolean;
 }
@@ -47,8 +59,10 @@ const parentOf = (path: string) => (path.includes("/") ? path.slice(0, path.last
  * The project a link note stands for, given what reading its repo's records found. The repo's
  * committed record is used only when it's for this project. Otherwise, as while the repo is
  * unreachable, the settings are the ones that can only protect more:
- * - the default private subfolder;
+ * - the default private subfolder, though with the docs folder unknown there's no private folder;
  * - attachments tracked, so the private-files list is ready if attachment sync is on.
+ * Without the docs folder the plugin can't tell which notes sync, so it treats every note as one
+ * that may: its rule can still be changed, and the engine applies it once the repo is back.
  */
 export function projectOf(note: LinkNote, link: LinkState | null): Project {
   const committed =
@@ -64,21 +78,42 @@ export function projectOf(note: LinkNote, link: LinkState | null): Project {
       linkNotePath: note.path,
       repoPath: note.repoPath,
       privateSubfolder: "private",
+      privateFolder: null,
       syncAttachments: true,
       docsFolder: null,
+      rootFiles: [],
       reachable: false,
     };
   }
+  const docsFolder = committed.docsFolder.split(/[\\/]/).filter(Boolean).join("/");
   return {
     id: note.id,
     folder: committed.vaultFolder.replace(/\\/g, "/").replace(/^\/+|\/+$/g, ""),
     linkNotePath: note.path,
     repoPath: note.repoPath,
     privateSubfolder: committed.settings.privateSubfolder,
+    privateFolder: privateFolderKey(docsFolder, committed.settings.privateSubfolder),
     syncAttachments: committed.settings.syncAttachments,
-    docsFolder: committed.docsFolder,
+    docsFolder,
+    rootFiles: committed.settings.rootFiles,
     reachable: true,
   };
+}
+
+/**
+ * True when the note at `key` is in what the link syncs: the docs folder, or a root file the link
+ * lists (REQ-22). Anything else in the project folder stays in the vault. While the repo can't be
+ * read, every key may sync, as `projectOf` explains.
+ */
+export function syncsKey(project: Project, key: string): boolean {
+  return (
+    project.docsFolder === null || createScope(project.docsFolder, project.rootFiles).includes(key)
+  );
+}
+
+/** True when the key is in the project's private folder; never while that folder is unknown. */
+export function inPrivateFolder(project: Project, key: string): boolean {
+  return project.privateFolder !== null && inPrivateSubfolder(key, project.privateFolder);
 }
 
 /** A file's place in a project: the project, and the file's key within the project folder. */

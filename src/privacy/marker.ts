@@ -5,9 +5,8 @@
  * with the note.
  */
 import { TFile, type App } from "obsidian";
-import { inPrivateSubfolder } from "@specdevship/project-docs-core/guards";
 import { FrontmatterError, readRule, setRule } from "@specdevship/project-docs-core/rules";
-import type { ProjectIndex } from "../projects.js";
+import { inPrivateFolder, type ProjectIndex } from "../projects.js";
 
 /** What marking one note did. */
 export type MarkResult = "marked" | "already" | "not-private" | "unreadable-frontmatter";
@@ -24,7 +23,7 @@ export class PrivateMarker {
     if (file.extension !== "md") return false;
     const place = this.projects.projectFor(file.path);
     if (!place || file.path === place.project.linkNotePath) return false;
-    return inPrivateSubfolder(place.key, place.project.privateSubfolder);
+    return inPrivateFolder(place.project, place.key);
   }
 
   /**

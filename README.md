@@ -27,11 +27,27 @@ BRAT checks for newer beta releases and updates the plugin, at startup if you tu
 1. Link a repo to a folder in your vault with the VS Code extension's **Project Docs: Link to Obsidian**. That creates the project folder's folder note, the **link note**, which records the repo's path.
 2. Install and enable this plugin (see [Install](#install)). It finds every linked project in the vault from its link note, and reads the project's settings from the repo's `.project-docs.json`.
 
-While the repo can't be read, for example on a disconnected drive, the plugin assumes the settings that protect the most: the private folder is `private`, and attachments are tracked.
+The project folder mirrors the repo: each file has the same path in both. With `docs` linked, the docs are in the project folder's `docs/` folder, and the repo's `README.md`, `CHANGELOG.md` and `RELEASE_NOTES.md` are at its top:
+
+```text
+my-repo/                       Vault/Projects/my-repo/
+  README.md          <->         README.md
+  CHANGELOG.md       <->         CHANGELOG.md
+  RELEASE_NOTES.md   <->         RELEASE_NOTES.md
+  docs/                          docs/
+    guide.md         <->           guide.md
+    private/                       private/        (vault only)
+  src/                           my-repo.md        (the link note, vault only)
+                                 ideas.md          (vault only)
+```
+
+Only the docs folder and the root files listed in `rootFiles` sync. A note elsewhere in the project folder, like `ideas.md` above, stays in the vault: its sync rule shows as **Vault only**, with no rule to change.
+
+While the repo can't be read, for example on a disconnected drive, the plugin assumes the settings that protect the most: attachments are tracked, and every note is treated as one that may sync. The private folder is inside the docs folder, which only the repo's settings name, so no note is newly marked private until the repo can be read again. The private folder still keeps its notes out of the repo meanwhile, and they're marked when the plugin next reads the repo.
 
 ## Private notes
 
-Everything in a project's private folder (`private` by default) stays in the vault: syncing never copies it to the repo.
+Everything in a project's private folder stays in the vault: syncing never copies it to the repo. The private folder is inside the docs folder: `private` by default (`privateSubfolder` in `.project-docs.json`), so `docs/private/` with `docs` linked.
 
 - **A note that arrives in the private folder is marked private.** That applies whether you create it there, move it there or copy it in another way. Within two seconds, the plugin adds `project-docs: private` to its frontmatter, and changes nothing else in the note.
 - **Notes copied in while Obsidian was closed** are marked when it next starts.
@@ -55,7 +71,7 @@ You don't need to type it. A project note's rule shows in the status bar and as 
 
 **Making a private note syncable asks first.** The dialog names the note and where in the repo it will be copied, since that is the one change that sends content to the repo. Cancelling, or closing the dialog, leaves the note private. Once you confirm, the plugin records your answer in `.project-docs/confirmations.json`, so VS Code doesn't ask you again.
 
-A note in the private folder is always private, so it's offered no other rule.
+A note in the private folder is always private, so it's offered no other rule. A note outside what the project syncs shows **Vault only**, and is offered none (see [Getting started](#getting-started)).
 
 ## Status and problems
 
@@ -90,7 +106,7 @@ If the project uses Advanced URI deep links, which the VS Code extension sets up
 
 The plugin's tab in Obsidian's settings has two parts:
 
-- **Linked projects** lists each project in the vault with its repo, docs folder, private folder and whether attachment sync is on. These are shown read-only: they live in the repo's committed `.project-docs.json`, shared with VS Code, the command line and anyone who clones the repo, so change them there.
+- **Linked projects** lists each project in the vault with its repo, docs folder, root files, private folder and whether attachment sync is on. These are shown read-only: they live in the repo's committed `.project-docs.json`, shared with VS Code, the command line and anyone who clones the repo, so change them there.
 - **Display** turns each of these on or off: the sync rule in the status bar, the sync rule icon in note headers, the sync status in the status bar, and banners on notes. All are on to begin with, and a change applies at once.
 
 The decoded view's toggle, and the status bar item that says when real values are on screen, are always shown.

@@ -94,21 +94,27 @@ describe("the plugin in a linked project", function () {
   before(async function () {
     fixture = await buildFixture({
       // Copied into the private folder while Obsidian was closed (REQ-10.3).
-      "private/arrived.md": "# Arrived\n\nCopied in while Obsidian was closed.\n",
-      "plan.md": "---\nproject-docs: private\n---\nThe plan.\n",
+      "docs/private/arrived.md": "# Arrived\n\nCopied in while Obsidian was closed.\n",
+      "docs/plan.md": "---\nproject-docs: private\n---\nThe plan.\n",
+      // At the top of the folder, which mirrors the repo root (TASK-18): a root file the link
+      // syncs, a note it doesn't, and a "private" folder outside the docs folder.
+      "README.md": "# Readme\n",
+      "scratch.md": "Vault only.\n",
+      "private/top.md": "Not in the docs folder's private folder.\n",
     });
     await browser.reloadObsidian({ vault: fixture.vault });
     folder = path.join(obsidianPage.getVaultPath(), FOLDER);
     // The plugin has found the project once the status bar names it.
     await until(
-      async () => (await read("private/arrived.md"))?.includes("project-docs: private") === true,
+      async () =>
+        (await read("docs/private/arrived.md"))?.includes("project-docs: private") === true,
       15_000,
       "the project to be found and swept",
     );
   });
 
   it("marks a file copied into the private folder while Obsidian was closed (REQ-10.3)", async function () {
-    expect(await read("private/arrived.md")).toBe(
+    expect(await read("docs/private/arrived.md")).toBe(
       "---\nproject-docs: private\n---\n# Arrived\n\nCopied in while Obsidian was closed.\n",
     );
   });
@@ -116,33 +122,33 @@ describe("the plugin in a linked project", function () {
   it("marks a note created in the private folder within 2 seconds (REQ-10.1)", async function () {
     await browser.executeObsidian(async ({ app }, p: string) => {
       await app.vault.create(p, "New and private.\n");
-    }, `${FOLDER}/private/created.md`);
+    }, `${FOLDER}/docs/private/created.md`);
     const started = Date.now();
     await until(
       async () =>
-        (await read("private/created.md"))?.startsWith("---\nproject-docs: private\n---\n") ===
+        (await read("docs/private/created.md"))?.startsWith("---\nproject-docs: private\n---\n") ===
         true,
       2_000,
       "the marker",
     );
     expect(Date.now() - started).toBeLessThan(2_000);
-    expect(await read("private/created.md")).toBe(
+    expect(await read("docs/private/created.md")).toBe(
       "---\nproject-docs: private\n---\nNew and private.\n",
     );
   });
 
   it("offers every rule from the file menu, two clicks from the note (REQ-9.1)", async function () {
-    await writeFile(onDisk("guide.md"), "# Guide\n");
+    await writeFile(onDisk("docs/guide.md"), "# Guide\n");
     await until(
       async () =>
         await browser.executeObsidian(
           ({ app }, p: string) => app.vault.getAbstractFileByPath(p) !== null,
-          `${FOLDER}/guide.md`,
+          `${FOLDER}/docs/guide.md`,
         ),
       5_000,
       "guide.md",
     );
-    await rightClick("guide.md");
+    await rightClick("docs/guide.md");
     const titles = await $$(".menu .menu-item-title").map((el) => el.getText());
     expect(titles).toEqual(
       expect.arrayContaining([
@@ -154,14 +160,39 @@ describe("the plugin in a linked project", function () {
     );
     await clickMenuItem("Sync rule: Repo to vault only");
     await until(
-      async () => (await read("guide.md")) === "---\nproject-docs: repo-to-vault\n---\n# Guide\n",
+      async () =>
+        (await read("docs/guide.md")) === "---\nproject-docs: repo-to-vault\n---\n# Guide\n",
       5_000,
       "the rule",
     );
   });
 
+  it("shows a note at the top of the folder as vault only, and a root file's rules (TASK-18)", async function () {
+    /** The Project Docs items of the open file menu, after which the menu is closed. */
+    const ourItems = async () => {
+      const titles = await $$(".menu .menu-item-title").map((el) => el.getText());
+      await browser.keys("Escape");
+      await $(".menu").waitForDisplayed({ reverse: true });
+      return titles.filter((t) => t.startsWith("Sync rule:") || t.startsWith("Vault only"));
+    };
+    await rightClick("scratch.md");
+    expect(await ourItems()).toEqual(["Vault only: outside the folders this project syncs"]);
+    await open("scratch.md");
+    await until(async () => (await statusTexts()).includes("Vault only"), 5_000, "Vault only");
+
+    await rightClick("README.md");
+    expect(await ourItems()).toEqual([
+      "Sync rule: Sync both ways",
+      "Sync rule: Repo to vault only",
+      "Sync rule: Repo only",
+      "Sync rule: Private, vault only",
+    ]);
+    // Only the docs folder's private folder makes a note private.
+    expect(await read("private/top.md")).toBe("Not in the docs folder's private folder.\n");
+  });
+
   it("asks before un-privating a note, and cancelling leaves it private (REQ-9.3)", async function () {
-    await rightClick("plan.md");
+    await rightClick("docs/plan.md");
     await clickMenuItem("Sync rule: Sync both ways");
     const modal = $(".modal");
     await modal.waitForDisplayed();
@@ -169,22 +200,22 @@ describe("the plugin in a linked project", function () {
     expect(await modal.getText()).toContain("docs/plan.md");
     await clickText(".modal button", "Cancel");
     await modal.waitForDisplayed({ reverse: true });
-    expect(await read("plan.md")).toBe("---\nproject-docs: private\n---\nThe plan.\n");
+    expect(await read("docs/plan.md")).toBe("---\nproject-docs: private\n---\nThe plan.\n");
   });
 
   it("records the confirmation, so VS Code doesn't ask again (REQ-10.6)", async function () {
-    await rightClick("plan.md");
+    await rightClick("docs/plan.md");
     await clickMenuItem("Sync rule: Sync both ways");
     await clickText(".modal button", "Sync to repo");
     const expected = "---\nproject-docs: sync\n---\nThe plan.\n";
-    await until(async () => (await read("plan.md")) === expected, 5_000, "the new rule");
+    await until(async () => (await read("docs/plan.md")) === expected, 5_000, "the new rule");
     await until(
       async () => (await read(".project-docs/confirmations.json")) !== null,
       5_000,
       "confirmations.json",
     );
     expect(parseConfirmations(await read(".project-docs/confirmations.json"))).toEqual([
-      { path: "plan.md", sha256: markdownHash(expected) },
+      { path: "docs/plan.md", sha256: markdownHash(expected) },
     ]);
   });
 
@@ -197,9 +228,9 @@ describe("the plugin in a linked project", function () {
       ).files;
     await browser.executeObsidian(async ({ app }, p: string) => {
       await app.vault.createBinary(p, new Uint8Array([137, 80, 78, 71, 1, 2, 3]).buffer);
-    }, `${FOLDER}/private/shot.png`);
+    }, `${FOLDER}/docs/private/shot.png`);
     await until(
-      async () => (await listed()).some((f) => f.path === "private/shot.png"),
+      async () => (await listed()).some((f) => f.path === "docs/private/shot.png"),
       5_000,
       "the record",
     );
@@ -215,23 +246,23 @@ describe("the plugin in a linked project", function () {
         const moved = app.vault.getAbstractFileByPath(to);
         if (moved instanceof obsidian.TFile) await app.vault.copy(moved, copy);
       },
-      `${FOLDER}/private/shot.png`,
-      `${FOLDER}/images/renamed.png`,
-      `${FOLDER}/images/duplicate.png`,
+      `${FOLDER}/docs/private/shot.png`,
+      `${FOLDER}/docs/images/renamed.png`,
+      `${FOLDER}/docs/images/duplicate.png`,
     );
     await until(
-      async () => (await listed()).some((f) => f.path === "images/renamed.png"),
+      async () => (await listed()).some((f) => f.path === "docs/images/renamed.png"),
       5_000,
       "the moved record",
     );
     const files = await listed();
     // The duplicate isn't listed by path, but its content's hash is, which the engine checks too.
     expect(files.map((f) => f.sha256)).toContain(hash);
-    expect(files.some((f) => f.path === "private/shot.png")).toBe(false);
+    expect(files.some((f) => f.path === "docs/private/shot.png")).toBe(false);
   });
 
   it("shows a held-back change as a banner on the note (REQ-17.2)", async function () {
-    await writeFile(onDisk("held.md"), "Links to a private note.\n");
+    await writeFile(onDisk("docs/held.md"), "Links to a private note.\n");
     await mkdir(onDisk(".project-docs"), { recursive: true });
     await writeFile(
       onDisk(".project-docs/status.json"),
@@ -241,8 +272,8 @@ describe("the plugin in a linked project", function () {
         items: [
           {
             kind: "held-back",
-            path: "held.md",
-            message: "held.md isn't synced to the repo until this is fixed",
+            path: "docs/held.md",
+            message: "docs/held.md isn't synced to the repo until this is fixed",
             reasons: ["links to the private note server-notes"],
           },
         ],
@@ -252,16 +283,16 @@ describe("the plugin in a linked project", function () {
       async () =>
         await browser.executeObsidian(
           ({ app }, p: string) => app.vault.getAbstractFileByPath(p) !== null,
-          `${FOLDER}/held.md`,
+          `${FOLDER}/docs/held.md`,
         ),
       5_000,
       "held.md",
     );
-    await open("held.md");
+    await open("docs/held.md");
     const banner = $(".workspace-leaf.mod-active .project-docs-banner");
     await banner.waitForDisplayed({ timeout: 8_000 });
     expect(await banner.getText()).toContain(
-      "held.md isn't synced to the repo until this is fixed",
+      "docs/held.md isn't synced to the repo until this is fixed",
     );
     expect(await banner.getText()).toContain("links to the private note server-notes");
     expect(await statusTexts()).toContain("Project Docs: 1 needs attention");
@@ -272,7 +303,7 @@ describe("the plugin in a linked project", function () {
     ["Stop syncing it", "stop"],
   ] as const) {
     it(`records "${button}" for a folder that became ignored, for the engine (AC 3.10)`, async function () {
-      const folderName = `ignored-${choice}`;
+      const folderName = `docs/ignored-${choice}`;
       await mkdir(onDisk(folderName), { recursive: true });
       await writeFile(onDisk(`${folderName}/a.md`), "A note git now ignores.\n");
       await mkdir(onDisk(".project-docs"), { recursive: true });
@@ -346,7 +377,8 @@ describe("the plugin in a linked project", function () {
     );
     const text = (await tabText()) ?? "";
     expect(text).toContain(FOLDER);
-    expect(text).toContain("Private folder: private");
+    expect(text).toContain("Private folder: docs/private");
+    expect(text).toContain("Root files: README.md, CHANGELOG.md, RELEASE_NOTES.md");
     expect(text).toContain("Display");
 
     /** Clicks the toggle of the setting named `name`, as a person would. */
@@ -394,7 +426,7 @@ describe("the plugin in a linked project", function () {
     }
 
     it("shows the toggle on a coded note without any menu, and the Coded mode", async function () {
-      await open("paragraphs.md");
+      await open("docs/paragraphs.md");
       const eye = $('.workspace-leaf.mod-active .view-action[aria-label="Show decoded"]');
       await eye.waitForDisplayed({ timeout: 8_000 });
       expect(await statusTexts()).toContain("Coded");
@@ -402,34 +434,34 @@ describe("the plugin in a linked project", function () {
 
     it("shows real values with the indicator, and changes no file", async function () {
       const before = {
-        note: await read("paragraphs.md"),
-        mtime: (await stat(onDisk("paragraphs.md"))).mtimeMs,
+        note: await read("docs/paragraphs.md"),
+        mtime: (await stat(onDisk("docs/paragraphs.md"))).mtimeMs,
         repo: await readFile(path.join(fixture.repo, "PRIVATE.md"), "utf8"),
       };
-      const shown = await decode("paragraphs.md");
+      const shown = await decode("docs/paragraphs.md");
       expect(shown).toContain("Decoded: real values shown");
       expect(shown).toContain("DESK-FAKE01");
       expect(shown).toContain("100.99.12.40");
       expect(shown).not.toMatch(/(?<![\p{L}\p{N}])myhost(?![\p{L}\p{N}])/u);
       expect(await statusTexts()).toContain("Decoded: real values shown");
-      expect(await read("paragraphs.md")).toBe(before.note);
-      expect((await stat(onDisk("paragraphs.md"))).mtimeMs).toBe(before.mtime);
+      expect(await read("docs/paragraphs.md")).toBe(before.note);
+      expect((await stat(onDisk("docs/paragraphs.md"))).mtimeMs).toBe(before.mtime);
       expect(await readFile(path.join(fixture.repo, "PRIVATE.md"), "utf8")).toBe(before.repo);
     });
 
     for (const [key, expectations] of [
       [
-        "footnotes.md",
+        "docs/footnotes.md",
         ["DESK-FAKE01 answers on 100.99.12.34", "Every machine on fake-otter-0000.ts.net"],
       ],
-      ["properties.md", ["DESK-FAKE01"]],
+      ["docs/properties.md", ["DESK-FAKE01"]],
       [
-        "embeds.md",
+        "docs/embeds.md",
         ["DESK-FAKE01 lives on fake-otter-0000.ts.net", "curl https://nas.fake-otter-0000.ts.net"],
       ],
-      ["callouts.md", ["About DESK-FAKE01"]],
-      ["tables.md", ["100.99.12.34"]],
-      ["code.md", ["ssh admin@DESK-FAKE01"]],
+      ["docs/callouts.md", ["About DESK-FAKE01"]],
+      ["docs/tables.md", ["100.99.12.34"]],
+      ["docs/code.md", ["ssh admin@DESK-FAKE01"]],
     ] as const) {
       it(`decodes ${key} completely`, async function () {
         const shown = await decode(key);
@@ -440,7 +472,7 @@ describe("the plugin in a linked project", function () {
     }
 
     it("switches back to the coded note", async function () {
-      await decode("tables.md");
+      await decode("docs/tables.md");
       await $('.workspace-leaf.mod-active .view-action[aria-label="Show coded"]').click();
       await until(
         async () =>
@@ -455,7 +487,7 @@ describe("the plugin in a linked project", function () {
     it("shows the standard's error, and nothing decoded, without PRIVATE.md (REQ-14.4)", async function () {
       await rm(path.join(fixture.repo, "PRIVATE.md"));
       try {
-        const shown = await decode("paragraphs.md");
+        const shown = await decode("docs/paragraphs.md");
         expect(shown).toContain("restore it from wherever you keep it");
         expect(shown).not.toContain("DESK-FAKE01");
       } finally {
@@ -474,7 +506,7 @@ describe("the plugin in a linked project", function () {
         "## Placeholders\n\n| Placeholder in the repo | Real value | What it is |\n| --- | --- | --- |\n",
       );
       try {
-        const shown = await decode("paragraphs.md");
+        const shown = await decode("docs/paragraphs.md");
         expect(shown).toContain("PRIVATE.md has no placeholders yet");
         expect(shown).toContain("myhost");
       } finally {

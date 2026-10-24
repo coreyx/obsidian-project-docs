@@ -2,10 +2,10 @@
  * Changing a note's sync rule with the mouse (REQ-9.0.2, 9.1, 9.3, TASK-8). The rules appear as
  * items directly in the file menu, two clicks from the file. (Obsidian's API has no submenus, so
  * the plan's "Sync rule" submenu became a menu section.) Making a private note syncable asks first,
- * and records the user's answer so VS Code doesn't ask again (REQ-10.6).
+ * and records the user's answer so VS Code doesn't ask again (REQ-10.6). A note outside what the
+ * project syncs has no rule to change: it's shown as vault only (REQ-22, TASK-18).
  */
 import { Notice, type App, type Menu, type TFile } from "obsidian";
-import { inPrivateSubfolder } from "@specdevship/project-docs-core/guards";
 import {
   FrontmatterError,
   SYNC_RULES,
@@ -15,8 +15,11 @@ import {
   type SyncRule,
 } from "@specdevship/project-docs-core/rules";
 import type { Confirmations } from "../privacy/confirmations.js";
-import type { ProjectFile, ProjectIndex } from "../projects.js";
+import { inPrivateFolder, syncsKey, type ProjectFile, type ProjectIndex } from "../projects.js";
 import { confirmUnprivate } from "./confirm-modal.js";
+
+/** How a note outside what the project syncs is shown, in place of a rule. */
+export const VAULT_ONLY = { icon: "unlink", label: "Vault only" } as const;
 
 /** How each rule is named in menus and the status bar. */
 export const RULE_LABELS: Record<SyncRule, string> = {
@@ -60,12 +63,19 @@ export class RuleChanger {
     return place && file.path !== place.project.linkNotePath ? place : null;
   }
 
+  /** True when the note is in what its project syncs: the docs folder or a listed root file. */
+  syncs(place: ProjectFile): boolean {
+    return syncsKey(place.project, place.key);
+  }
+
   /**
    * The rules a note may be given. A note in the private folder is private whatever its
-   * frontmatter says (REQ-10.0.1), so it's offered no other rule.
+   * frontmatter says (REQ-10.0.1), so it's offered no other rule; a note the project doesn't sync
+   * is offered none.
    */
   choicesFor(place: ProjectFile): readonly SyncRule[] {
-    return inPrivateSubfolder(place.key, place.project.privateSubfolder) ? ["private"] : SYNC_RULES;
+    if (!this.syncs(place)) return [];
+    return inPrivateFolder(place.project, place.key) ? ["private"] : SYNC_RULES;
   }
 
   /** A note's current rule, or "invalid" when its frontmatter names an unknown one. */
@@ -82,9 +92,9 @@ export class RuleChanger {
     if (current === rule) return "unchanged";
     const leavingPrivate = current === "private" && rule !== "private";
     if (leavingPrivate) {
-      const { docsFolder } = place.project;
-      const repoPath =
-        docsFolder === null ? null : [docsFolder, place.key].filter(Boolean).join("/");
+      // The key is the note's path in the repo, though it can't be named while the repo can't be
+      // read, as the project folder may not be linked as recorded.
+      const repoPath = place.project.reachable ? place.key : null;
       if (!(await this.ask(file.name, repoPath))) return "cancelled";
     }
     let text: string;
@@ -126,6 +136,16 @@ export class RuleChanger {
   addItems(menu: Menu, file: TFile): void {
     const place = this.placeOf(file);
     if (!place) return;
+    if (!this.syncs(place)) {
+      menu.addItem((item) =>
+        item
+          .setSection("project-docs")
+          .setTitle(`${VAULT_ONLY.label}: outside the folders this project syncs`)
+          .setIcon(VAULT_ONLY.icon)
+          .setDisabled(true),
+      );
+      return;
+    }
     const current = this.cachedRuleOf(file);
     for (const rule of this.choicesFor(place)) {
       menu.addItem((item) =>
